@@ -49,6 +49,10 @@ CheapClickerApp* cheap_clicker_alloc(void) {
         CheapClickerViewVariableList,
         variable_item_list_get_view(app->var_item_list));
 
+    app->popup = popup_alloc();
+    view_dispatcher_add_view(
+        app->view_dispatcher, CheapClickerViewPopup, popup_get_view(app->popup));
+
     app->calibrate_view = cc_calibrate_view_alloc();
     view_dispatcher_add_view(
         app->view_dispatcher,
@@ -63,7 +67,7 @@ CheapClickerApp* cheap_clicker_alloc(void) {
 
     app->script_path = furi_string_alloc();
     app->profile_count = 0;
-    app->active_profile_idx = 0;
+    app->active_profile_idx = CC_PROFILE_IDX_NONE;
     app->script = NULL;
 
     app->script = cc_script_alloc(app);
@@ -85,6 +89,8 @@ void cheap_clicker_free(CheapClickerApp* app) {
     text_input_free(app->text_input);
     view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewVariableList);
     variable_item_list_free(app->var_item_list);
+    view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewPopup);
+    popup_free(app->popup);
     view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewCalibrate);
     cc_calibrate_view_free(app->calibrate_view);
     view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewRun);
@@ -108,6 +114,8 @@ int32_t cheap_clicker_app(void* p) {
 
     cc_profile_load_all(app);
     cc_profile_load_active(app);
+    if(app->profile_count == 0 || app->active_profile_idx >= app->profile_count)
+        app->active_profile_idx = 0;
 
     if(app->profile_count > 0) {
         cc_ble_start(app);
@@ -116,8 +124,12 @@ int32_t cheap_clicker_app(void* p) {
     scene_manager_next_scene(app->scene_manager, CheapClickerSceneStart);
     view_dispatcher_run(app->view_dispatcher);
 
-    if(app->profile_count > 0 && app->ble_hid_profile != NULL) {
+    if(app->ble_hid_profile != NULL) {
         cc_ble_stop(app);
+    }
+    if(app->new_profile_pending && app->profile_count > 0) {
+        app->profile_count--;
+        app->new_profile_pending = false;
     }
     cc_profile_save_active(app);
 
