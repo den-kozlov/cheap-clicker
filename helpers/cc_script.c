@@ -239,8 +239,10 @@ static int32_t cc_script_worker(void* context) {
     CcScript* s = context;
 
     // Wait for RUN event
-    furi_thread_flags_wait(CC_EVT_RUN, FuriFlagWaitAny, FuriWaitForever);
-    furi_thread_flags_clear(CC_EVT_RUN);
+    uint32_t start_flags =
+        furi_thread_flags_wait(CC_EVT_RUN | CC_EVT_STOP, FuriFlagWaitAny, FuriWaitForever);
+    furi_thread_flags_clear(CC_EVT_RUN | CC_EVT_STOP);
+    if(start_flags & CC_EVT_STOP) return 0;
 
     furi_mutex_acquire(s->mutex, FuriWaitForever);
     s->status.state = CcScriptStateRunning;

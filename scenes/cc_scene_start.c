@@ -1,46 +1,55 @@
 #include "../cheap_clicker_i.h"
 
-typedef enum { CcStartRun = 0, CcStartProfiles, CcStartScripts } CcStartIdx;
-
-static void cc_start_cb(void* context, uint32_t index) {
-    view_dispatcher_send_custom_event(((CheapClickerApp*)context)->view_dispatcher, index);
+static void cc_start_event_cb(void* context, CcStartViewEvent event) {
+    view_dispatcher_send_custom_event(
+        ((CheapClickerApp*)context)->view_dispatcher, (uint32_t)event);
 }
 
 void cc_scene_start_on_enter(void* context) {
     CheapClickerApp* app = context;
-    submenu_reset(app->submenu);
-    if(app->active_profile_idx == CC_PROFILE_IDX_NONE) {
-        submenu_add_item(app->submenu, "Devices", CcStartProfiles, cc_start_cb, app);
-    } else {
-        char run_label[48];
-        snprintf(run_label, sizeof(run_label), "Run [%s]",
-                 app->profiles[app->active_profile_idx].name);
-        submenu_add_item(app->submenu, run_label, CcStartRun, cc_start_cb, app);
-        submenu_add_item(app->submenu, "Devices", CcStartProfiles, cc_start_cb, app);
-        submenu_add_item(app->submenu, "Scripts", CcStartScripts, cc_start_cb, app);
-    }
-    submenu_set_selected_item(app->submenu,
-        scene_manager_get_scene_state(app->scene_manager, CheapClickerSceneStart));
-    view_dispatcher_switch_to_view(app->view_dispatcher, CheapClickerViewSubmenu);
+
+    bool has_device = app->active_profile_idx != CC_PROFILE_IDX_NONE;
+    const char* name = has_device ? app->profiles[app->active_profile_idx].name : NULL;
+
+    cc_start_view_set_callback(app->start_view, cc_start_event_cb, app);
+    cc_start_view_update(app->start_view, name, has_device);
+
+    uint32_t saved = scene_manager_get_scene_state(app->scene_manager, CheapClickerSceneStart);
+    cc_start_view_set_cursor(app->start_view, (uint8_t)saved);
+
+    view_dispatcher_switch_to_view(app->view_dispatcher, CheapClickerViewStart);
 }
 
 bool cc_scene_start_on_event(void* context, SceneManagerEvent event) {
     CheapClickerApp* app = context;
     if(event.type != SceneManagerEventTypeCustom) return false;
-    scene_manager_set_scene_state(app->scene_manager, CheapClickerSceneStart, event.event);
-    if(event.event == CcStartProfiles) {
+
+    scene_manager_set_scene_state(
+        app->scene_manager,
+        CheapClickerSceneStart,
+        cc_start_view_get_cursor(app->start_view));
+
+    switch((CcStartViewEvent)event.event) {
+    case CcStartViewEventDeviceSelect:
         scene_manager_next_scene(app->scene_manager, CheapClickerSceneProfiles);
-    } else if(event.event == CcStartRun || event.event == CcStartScripts) {
-        if(app->profile_count == 0) {
-            // No profiles — go to Profiles scene instead to add one
-            scene_manager_next_scene(app->scene_manager, CheapClickerSceneProfiles);
-        } else {
-            scene_manager_next_scene(app->scene_manager, CheapClickerSceneScripts);
-        }
+        break;
+    case CcStartViewEventDeviceEdit:
+        if(app->active_profile_idx != CC_PROFILE_IDX_NONE)
+            scene_manager_next_scene(app->scene_manager, CheapClickerSceneProfileEdit);
+        break;
+    case CcStartViewEventScripts:
+        scene_manager_next_scene(app->scene_manager, CheapClickerSceneScripts);
+        break;
+    default:
+        return false;
     }
     return true;
 }
 
 void cc_scene_start_on_exit(void* context) {
-    submenu_reset(((CheapClickerApp*)context)->submenu);
+    CheapClickerApp* app = context;
+    scene_manager_set_scene_state(
+        app->scene_manager,
+        CheapClickerSceneStart,
+        cc_start_view_get_cursor(app->start_view));
 }

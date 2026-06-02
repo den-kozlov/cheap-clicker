@@ -1,6 +1,7 @@
 #include "cheap_clicker_i.h"
 #include "views/cc_calibrate_view.h"
 #include "views/cc_run_view.h"
+#include "views/cc_start_view.h"
 #include "helpers/cc_profile.h"
 #include "helpers/cc_ble.h"
 #include "helpers/cc_script.h"
@@ -65,6 +66,12 @@ CheapClickerApp* cheap_clicker_alloc(void) {
         CheapClickerViewRun,
         cc_run_view_get_view(app->run_view));
 
+    app->start_view = cc_start_view_alloc();
+    view_dispatcher_add_view(
+        app->view_dispatcher,
+        CheapClickerViewStart,
+        cc_start_view_get_view(app->start_view));
+
     app->script_path = furi_string_alloc();
     app->profile_count = 0;
     app->active_profile_idx = CC_PROFILE_IDX_NONE;
@@ -95,6 +102,8 @@ void cheap_clicker_free(CheapClickerApp* app) {
     cc_calibrate_view_free(app->calibrate_view);
     view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewRun);
     cc_run_view_free(app->run_view);
+    view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewStart);
+    cc_start_view_free(app->start_view);
 
     scene_manager_free(app->scene_manager);
     view_dispatcher_free(app->view_dispatcher);

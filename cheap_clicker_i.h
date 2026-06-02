@@ -10,11 +10,13 @@
 #include <gui/modules/submenu.h>
 #include <gui/modules/text_input.h>
 #include <gui/modules/variable_item_list.h>
+#include <gui/modules/popup.h>
 #include <notification/notification.h>
 #include <storage/storage.h>
 #include <ble_profile/extra_profiles/hid_profile.h>
 
 #include "scenes/cc_scene.h"
+#include "views/cc_start_view.h"
 
 #define CC_MAX_BUTTONS  17
 #define CC_MAX_PROFILES  5
@@ -54,8 +56,10 @@ typedef enum {
     CheapClickerViewSubmenu,
     CheapClickerViewTextInput,
     CheapClickerViewVariableList,
+    CheapClickerViewPopup,
     CheapClickerViewCalibrate,
     CheapClickerViewRun,
+    CheapClickerViewStart,
     CheapClickerViewCount,
 } CheapClickerView;
 
@@ -75,8 +79,10 @@ typedef struct {
     Submenu* submenu;
     TextInput* text_input;
     VariableItemList* var_item_list;
+    Popup* popup;
     CcCalibrateView* calibrate_view;
     CcRunView* run_view;
+    CcStartView* start_view;
 
     CcProfile profiles[CC_MAX_PROFILES];
     uint8_t profile_count;
@@ -85,6 +91,7 @@ typedef struct {
     char text_input_buf[CC_MAX_NAME_LEN];
     uint8_t edit_button_idx;
     uint8_t button_edit_mode; // 0=profile name, 1=ble name, 0xFF=button rename
+    bool new_profile_pending; // true while a newly added profile has not yet been paired
 
     FuriString* script_path;
 

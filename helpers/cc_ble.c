@@ -41,8 +41,12 @@ void cc_ble_start(CheapClickerApp* app) {
     };
 
     app->ble_hid_profile = bt_profile_start(app->bt, ble_profile_hid, &params);
-    furi_check(app->ble_hid_profile);
+    if(!app->ble_hid_profile) {
+        FURI_LOG_E("CcBle", "bt_profile_start failed");
+        return;
+    }
 
+    furi_hal_bt_start_advertising();
     bt_set_status_changed_callback(app->bt, cc_ble_status_cb, app);
 
     s_cur_x = 0;
@@ -56,6 +60,9 @@ void cc_ble_stop(CheapClickerApp* app) {
     bt_set_status_changed_callback(app->bt, NULL, NULL);
 
     if(app->ble_hid_profile != NULL) {
+        bt_disconnect(app->bt);
+        furi_delay_ms(200);
+        bt_keys_storage_set_default_path(app->bt);
         bt_profile_restore_default(app->bt);
         app->ble_hid_profile = NULL;
     }

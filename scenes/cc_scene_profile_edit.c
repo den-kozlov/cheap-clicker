@@ -7,7 +7,6 @@ typedef enum {
     CcProfEditBleName,
     CcProfEditButtons,
     CcProfEditCalibrate,
-    CcProfEditSetActive,
     CcProfEditDelete,
 } CcProfEditIdx;
 
@@ -26,7 +25,6 @@ void cc_scene_profile_edit_on_enter(void* context) {
     submenu_add_item(app->submenu, buf, CcProfEditBleName, cc_prof_edit_cb, app);
     submenu_add_item(app->submenu, "Buttons", CcProfEditButtons, cc_prof_edit_cb, app);
     submenu_add_item(app->submenu, "Calibrate", CcProfEditCalibrate, cc_prof_edit_cb, app);
-    submenu_add_item(app->submenu, "Set as Active", CcProfEditSetActive, cc_prof_edit_cb, app);
     submenu_add_item(app->submenu, "Delete Profile", CcProfEditDelete, cc_prof_edit_cb, app);
     submenu_set_selected_item(app->submenu,
         scene_manager_get_scene_state(app->scene_manager, CheapClickerSceneProfileEdit));
@@ -54,11 +52,6 @@ bool cc_scene_profile_edit_on_event(void* context, SceneManagerEvent event) {
         break;
     case CcProfEditCalibrate:
         scene_manager_next_scene(app->scene_manager, CheapClickerSceneCalibrate);
-        break;
-    case CcProfEditSetActive:
-        cc_profile_save_active(app);
-        if(app->ble_hid_profile) cc_ble_stop(app);
-        cc_ble_start(app);
         break;
     case CcProfEditDelete:
         cc_profile_delete(app, app->active_profile_idx);
