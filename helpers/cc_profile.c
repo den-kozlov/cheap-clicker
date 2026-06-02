@@ -71,7 +71,7 @@ void cc_profile_save(CheapClickerApp* app, uint8_t idx) {
             if(!flipper_format_write_uint32(fff, "TriggerX", &tx, 1)) break;
             if(!flipper_format_write_uint32(fff, "TriggerY", &ty, 1)) break;
             uint32_t btn_count = p->button_count;
-            flipper_format_write_uint32(fff, "ButtonCount", &btn_count, 1);
+            if(!flipper_format_write_uint32(fff, "ButtonCount", &btn_count, 1)) break;
         } while(0);
         flipper_format_file_close(fff);
     }
@@ -152,6 +152,7 @@ static bool cc_profile_load_slot(CheapClickerApp* app, uint8_t idx) {
 
         uint32_t btn_count = 0;
         flipper_format_read_uint32(fff, "ButtonCount", &btn_count, 1);
+        if(btn_count > CC_MAX_BUTTONS) btn_count = CC_MAX_BUTTONS;
         p->button_count = (uint8_t)btn_count;
 
         ok = true;
@@ -164,29 +165,33 @@ static bool cc_profile_load_slot(CheapClickerApp* app, uint8_t idx) {
         char buttons_path[144];
         cc_buttons_fds_path(buttons_path, sizeof(buttons_path), idx);
 
-        if(flipper_format_file_open_existing(fff, buttons_path)) {
+        FlipperFormat* fff_buttons = flipper_format_file_alloc(storage);
+
+        if(flipper_format_file_open_existing(fff_buttons, buttons_path)) {
             uint32_t version = 0;
-            flipper_format_read_header(fff, temp, &version);
+            flipper_format_read_header(fff_buttons, temp, &version);
 
             for(uint8_t i = 0; i < p->button_count && i < CC_MAX_BUTTONS; i++) {
                 char key[48];
                 snprintf(key, sizeof(key), "Button%uName", (unsigned)i);
-                if(flipper_format_read_string(fff, key, temp)) {
+                if(flipper_format_read_string(fff_buttons, key, temp)) {
                     strlcpy(p->buttons[i].name, furi_string_get_cstr(temp),
                             sizeof(p->buttons[i].name));
                 }
                 snprintf(key, sizeof(key), "Button%uX", (unsigned)i);
                 uint32_t bx = 0;
-                flipper_format_read_uint32(fff, key, &bx, 1);
+                flipper_format_read_uint32(fff_buttons, key, &bx, 1);
                 p->buttons[i].x = (int16_t)bx;
 
                 snprintf(key, sizeof(key), "Button%uY", (unsigned)i);
                 uint32_t by = 0;
-                flipper_format_read_uint32(fff, key, &by, 1);
+                flipper_format_read_uint32(fff_buttons, key, &by, 1);
                 p->buttons[i].y = (int16_t)by;
             }
-            flipper_format_file_close(fff);
         }
+        // Always close before free, even if open failed (SDK no-op on closed handle)
+        flipper_format_file_close(fff_buttons);
+        flipper_format_free(fff_buttons);
     }
 
     flipper_format_free(fff);
@@ -206,11 +211,17 @@ void cc_profile_load_all(CheapClickerApp* app) {
 
     app->profile_count = 0;
 
+    uint8_t count = 0;
     for(uint8_t i = 0; i < CC_MAX_PROFILES; i++) {
         if(cc_profile_load_slot(app, i)) {
-            app->profile_count = i + 1;
+            // Compact: move into next contiguous position if needed
+            if(count != i) {
+                app->profiles[count] = app->profiles[i];
+            }
+            count++;
         }
     }
+    app->profile_count = count;
 
     if(app->profile_count == 0) {
         cc_profile_add(app, "My iPhone", "CheapClicker");
@@ -231,7 +242,7 @@ uint8_t cc_profile_add(CheapClickerApp* app, const char* name, const char* ble_n
     furi_assert(ble_name);
 
     if(app->profile_count >= CC_MAX_PROFILES) {
-        return 255;
+        return CC_PROFILE_IDX_NONE;
     }
 
     uint8_t idx = app->profile_count;
@@ -277,6 +288,9 @@ void cc_profile_delete(CheapClickerApp* app, uint8_t idx) {
         app->active_profile_idx = 0;
     } else if(app->active_profile_idx >= app->profile_count) {
         app->active_profile_idx = app->profile_count - 1;
+    } else if(app->active_profile_idx == idx) {
+        // Active profile was deleted; reset to first profile
+        app->active_profile_idx = 0;
     } else if(app->active_profile_idx > idx) {
         app->active_profile_idx--;
     }
@@ -302,7 +316,7 @@ void cc_profile_save_active(CheapClickerApp* app) {
             if(!flipper_format_write_header_cstr(fff, CC_CONFIG_FILE_TYPE, CC_CONFIG_VERSION))
                 break;
             uint32_t active = app->active_profile_idx;
-            flipper_format_write_uint32(fff, "ActiveProfile", &active, 1);
+            if(!flipper_format_write_uint32(fff, "ActiveProfile", &active, 1)) break;
         } while(0);
         flipper_format_file_close(fff);
     }

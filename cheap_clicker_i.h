@@ -21,6 +21,7 @@
 #define CC_MAX_NAME_LEN 32
 #define CC_MAX_BLE_NAME_LEN 29  // BT advertising PDU limit (29 bytes usable)
 #define CC_BUTTON_IDX_NONE 0xFF
+#define CC_PROFILE_IDX_NONE 0xFF
 
 typedef struct {
     char name[CC_MAX_NAME_LEN];
