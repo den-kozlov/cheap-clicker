@@ -290,7 +290,7 @@ void cc_profile_delete(CheapClickerApp* app, uint8_t idx) {
 
     // Adjust active_profile_idx
     if(app->profile_count == 0) {
-        app->active_profile_idx = 0;
+        app->active_profile_idx = CC_PROFILE_IDX_NONE;
     } else if(app->active_profile_idx >= app->profile_count) {
         app->active_profile_idx = app->profile_count - 1;
     } else if(app->active_profile_idx == idx) {
