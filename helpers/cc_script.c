@@ -69,6 +69,7 @@ static uint64_t cc_file_tell(CcScript* s) {
 }
 
 static void cc_file_seek(CcScript* s, uint64_t offset) {
+    furi_assert(offset <= UINT32_MAX);  // scripts fit well within 4 GB
     storage_file_seek(s->file, (uint32_t)offset, true);
     s->buf_start = 0;
     s->buf_len = 0;
@@ -146,14 +147,21 @@ static uint32_t cc_execute_line(CcScript* s) {
 
     // DELAY <ms>
     if(strncmp(line, "DELAY ", 6) == 0) {
-        int ms = atoi(line + 6);
-        if(ms < 0) ms = 0;
+        char* end;
+        long ms_val = strtol(line + 6, &end, 10);
+        if(end == line + 6 || ms_val < 0) {
+            furi_mutex_acquire(s->mutex, FuriWaitForever);
+            snprintf(s->status.error_msg, sizeof(s->status.error_msg), "Bad DELAY value");
+            furi_mutex_release(s->mutex);
+            return UINT32_MAX;
+        }
+        uint32_t delay_ms = (uint32_t)ms_val;
 
         furi_mutex_acquire(s->mutex, FuriWaitForever);
-        snprintf(s->status.current_cmd, sizeof(s->status.current_cmd), "DELAY %d", ms);
+        snprintf(s->status.current_cmd, sizeof(s->status.current_cmd), "DELAY %lu", (unsigned long)delay_ms);
         furi_mutex_release(s->mutex);
 
-        return (uint32_t)ms;
+        return delay_ms;
     }
 
     // LOOP <count>
@@ -168,16 +176,23 @@ static uint32_t cc_execute_line(CcScript* s) {
             return UINT32_MAX;
         }
 
-        int count = atoi(line + 5);
-        if(count < 0) count = 0;
+        char* end;
+        long loop_count = strtol(line + 5, &end, 10);
+        if(end == line + 5 || loop_count < 0) {
+            furi_mutex_acquire(s->mutex, FuriWaitForever);
+            snprintf(s->status.error_msg, sizeof(s->status.error_msg), "Bad LOOP count");
+            furi_mutex_release(s->mutex);
+            return UINT32_MAX;
+        }
 
         CcLoopFrame* frame = &s->loop_stack[s->loop_depth];
         frame->file_offset = cc_file_tell(s);
-        frame->remaining = (count == 0) ? UINT32_MAX : (uint32_t)(count - 1);
+        // count=0 means infinite; UINT32_MAX is the sentinel for "never decrement"
+        frame->remaining = (loop_count == 0) ? UINT32_MAX : (uint32_t)(loop_count - 1);
         s->loop_depth++;
 
         furi_mutex_acquire(s->mutex, FuriWaitForever);
-        snprintf(s->status.current_cmd, sizeof(s->status.current_cmd), "LOOP %d", count);
+        snprintf(s->status.current_cmd, sizeof(s->status.current_cmd), "LOOP %ld", loop_count);
         furi_mutex_release(s->mutex);
 
         return 0;
@@ -251,9 +266,8 @@ static int32_t cc_script_worker(void* context) {
                 s->app->view_dispatcher, CheapClickerCustomEventScriptUpdate);
 
             // Wait for RESUME or STOP
-            furi_thread_flags_wait(
+            uint32_t woke = furi_thread_flags_wait(
                 CC_EVT_RESUME | CC_EVT_STOP, FuriFlagWaitAny, FuriWaitForever);
-            uint32_t woke = furi_thread_flags_get();
             furi_thread_flags_clear(CC_EVT_RESUME | CC_EVT_STOP);
 
             if(woke & CC_EVT_STOP) break;
