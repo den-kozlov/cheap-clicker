@@ -40,6 +40,12 @@ bool cc_scene_start_on_event(void* context, SceneManagerEvent event) {
     case CcStartViewEventScripts:
         scene_manager_next_scene(app->scene_manager, CheapClickerSceneScripts);
         break;
+    case CcStartViewEventManual:
+        scene_manager_next_scene(app->scene_manager, CheapClickerSceneManual);
+        break;
+    case CcStartViewEventOptions:
+        scene_manager_next_scene(app->scene_manager, CheapClickerSceneOptions);
+        break;
     default:
         return false;
     }
