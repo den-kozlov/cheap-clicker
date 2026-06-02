@@ -5,6 +5,18 @@
 #include "helpers/cc_profile.h"
 #include "helpers/cc_ble.h"
 #include "helpers/cc_script.h"
+#include "helpers/cc_manual.h"
+#include "views/cc_manual_view.h"
+
+static bool cc_signal_handler(uint32_t signal, void* arg, void* context) {
+    UNUSED(arg);
+    CheapClickerApp* app = context;
+    if(signal == FuriSignalExit) {
+        view_dispatcher_stop(app->view_dispatcher);
+        return true;
+    }
+    return false;
+}
 
 static bool cc_custom_event_callback(void* context, uint32_t event) {
     furi_assert(context);
@@ -72,9 +84,16 @@ CheapClickerApp* cheap_clicker_alloc(void) {
         CheapClickerViewStart,
         cc_start_view_get_view(app->start_view));
 
+    app->manual_view = cc_manual_view_alloc();
+    view_dispatcher_add_view(
+        app->view_dispatcher,
+        CheapClickerViewManual,
+        cc_manual_view_get_view(app->manual_view));
+
     app->script_path = furi_string_alloc();
     app->profile_count = 0;
     app->active_profile_idx = CC_PROFILE_IDX_NONE;
+    app->manual_pending_key = CC_BUTTON_IDX_NONE;
     app->script = NULL;
 
     app->script = cc_script_alloc(app);
@@ -104,6 +123,8 @@ void cheap_clicker_free(CheapClickerApp* app) {
     cc_run_view_free(app->run_view);
     view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewStart);
     cc_start_view_free(app->start_view);
+    view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewManual);
+    cc_manual_view_free(app->manual_view);
 
     scene_manager_free(app->scene_manager);
     view_dispatcher_free(app->view_dispatcher);
@@ -121,6 +142,8 @@ int32_t cheap_clicker_app(void* p) {
     UNUSED(p);
     CheapClickerApp* app = cheap_clicker_alloc();
 
+    cc_buttons_load(app);
+    cc_manual_layout_load(app);
     cc_profile_load_all(app);
     cc_profile_load_active(app);
     if(app->profile_count == 0) {
@@ -132,6 +155,8 @@ int32_t cheap_clicker_app(void* p) {
     if(app->profile_count > 0) {
         cc_ble_start(app);
     }
+
+    furi_thread_set_signal_callback(furi_thread_get_current(), cc_signal_handler, app);
 
     scene_manager_next_scene(app->scene_manager, CheapClickerSceneStart);
     view_dispatcher_run(app->view_dispatcher);
@@ -145,6 +170,7 @@ int32_t cheap_clicker_app(void* p) {
     }
     cc_profile_save_active(app);
 
+    furi_thread_set_signal_callback(furi_thread_get_current(), NULL, NULL);
     cheap_clicker_free(app);
     return 0;
 }
