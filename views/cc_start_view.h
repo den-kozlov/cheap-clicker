@@ -8,6 +8,8 @@ typedef enum {
     CcStartViewEventDeviceSelect,
     CcStartViewEventDeviceEdit,
     CcStartViewEventScripts,
+    CcStartViewEventManual,
+    CcStartViewEventOptions,
 } CcStartViewEvent;
 
 typedef void (*CcStartViewCallback)(void* context, CcStartViewEvent event);
