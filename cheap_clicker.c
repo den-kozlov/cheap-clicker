@@ -114,8 +114,11 @@ int32_t cheap_clicker_app(void* p) {
 
     cc_profile_load_all(app);
     cc_profile_load_active(app);
-    if(app->profile_count == 0 || app->active_profile_idx >= app->profile_count)
+    if(app->profile_count == 0) {
+        app->active_profile_idx = CC_PROFILE_IDX_NONE;
+    } else if(app->active_profile_idx >= app->profile_count) {
         app->active_profile_idx = 0;
+    }
 
     if(app->profile_count > 0) {
         cc_ble_start(app);
