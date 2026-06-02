@@ -37,6 +37,12 @@ static void cc_bt_keys_path(char* buf, size_t buf_size, uint8_t idx) {
     snprintf(buf, buf_size, APP_DATA_PATH("profiles/p%u/bt.keys"), (unsigned)idx);
 }
 
+static void cc_profile_remove_slot(Storage* storage, uint8_t idx) {
+    char slot_dir[128];
+    cc_profile_slot_dir(slot_dir, sizeof(slot_dir), idx);
+    storage_simply_remove_recursive(storage, slot_dir);
+}
+
 void cc_profile_save(CheapClickerApp* app, uint8_t idx) {
     furi_assert(app);
     furi_assert(idx < CC_MAX_PROFILES);
@@ -194,6 +200,13 @@ static bool cc_profile_load_slot(CheapClickerApp* app, uint8_t idx) {
         flipper_format_free(fff_buttons);
     }
 
+    // Only keep profiles that completed BLE pairing (bt.keys on disk)
+    if(ok && !storage_file_exists(storage, p->keys_path)) {
+        cc_profile_remove_slot(storage, idx);
+        memset(p, 0, sizeof(CcProfile));
+        ok = false;
+    }
+
     flipper_format_free(fff);
     furi_string_free(temp);
     furi_record_close(RECORD_STORAGE);
@@ -205,6 +218,7 @@ void cc_profile_load_all(CheapClickerApp* app) {
     furi_assert(app);
 
     Storage* storage = furi_record_open(RECORD_STORAGE);
+    storage_simply_mkdir(storage, CC_DATA_DIR);
     storage_simply_mkdir(storage, CC_PROFILES_DIR);
     storage_simply_mkdir(storage, CC_SCRIPTS_DIR);
     furi_record_close(RECORD_STORAGE);
@@ -223,20 +237,15 @@ void cc_profile_load_all(CheapClickerApp* app) {
     }
     app->profile_count = count;
 
+    // Clamp active index to valid range (handles zero profiles too)
     if(app->profile_count == 0) {
-        cc_profile_add(app, "My iPhone", "CheapClicker");
-    }
-
-    // Load active profile index from config.fds
-    cc_profile_load_active(app);
-
-    // Clamp active index to valid range
-    if(app->active_profile_idx >= app->profile_count) {
+        app->active_profile_idx = CC_PROFILE_IDX_NONE;
+    } else if(app->active_profile_idx >= app->profile_count) {
         app->active_profile_idx = 0;
     }
 }
 
-uint8_t cc_profile_add(CheapClickerApp* app, const char* name, const char* ble_name) {
+uint8_t cc_profile_add(CheapClickerApp* app, const char* name, const char* ble_name, bool save) {
     furi_assert(app);
     furi_assert(name);
     furi_assert(ble_name);
@@ -256,8 +265,9 @@ uint8_t cc_profile_add(CheapClickerApp* app, const char* name, const char* ble_n
     p->trigger_y = 0;
     p->button_count = 0;
 
-    cc_profile_save(app, idx);
     app->profile_count++;
+
+    if(save) cc_profile_save(app, idx);
 
     return idx;
 }
@@ -268,12 +278,7 @@ void cc_profile_delete(CheapClickerApp* app, uint8_t idx) {
     if(idx >= app->profile_count) return;
 
     Storage* storage = furi_record_open(RECORD_STORAGE);
-
-    // Remove the profile directory for this slot
-    char slot_dir[128];
-    cc_profile_slot_dir(slot_dir, sizeof(slot_dir), idx);
-    storage_simply_remove_recursive(storage, slot_dir);
-
+    cc_profile_remove_slot(storage, idx);
     furi_record_close(RECORD_STORAGE);
 
     // Shift profiles down in memory
