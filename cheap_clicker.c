@@ -20,6 +20,7 @@ static bool cc_back_event_callback(void* context) {
 CheapClickerApp* cheap_clicker_alloc(void) {
     CheapClickerApp* app = malloc(sizeof(CheapClickerApp));
     furi_check(app != NULL);
+    memset(app, 0, sizeof(CheapClickerApp));
 
     app->gui = furi_record_open(RECORD_GUI);
     app->bt = furi_record_open(RECORD_BT);

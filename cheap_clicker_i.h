@@ -84,6 +84,7 @@ typedef struct {
 
     char text_input_buf[CC_MAX_NAME_LEN];
     uint8_t edit_button_idx;
+    uint8_t button_edit_mode; // 0=profile name, 1=ble name, 0xFF=button rename
 
     FuriString* script_path;
 

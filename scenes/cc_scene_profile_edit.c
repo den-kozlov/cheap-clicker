@@ -41,10 +41,12 @@ bool cc_scene_profile_edit_on_event(void* context, SceneManagerEvent event) {
     switch((CcProfEditIdx)event.event) {
     case CcProfEditName:
         strlcpy(app->text_input_buf, p->name, CC_MAX_NAME_LEN);
+        app->button_edit_mode = 0;
         scene_manager_next_scene(app->scene_manager, CheapClickerSceneButtonEdit);
         break;
     case CcProfEditBleName:
         strlcpy(app->text_input_buf, p->ble_name, CC_MAX_BLE_NAME_LEN);
+        app->button_edit_mode = 1;
         scene_manager_next_scene(app->scene_manager, CheapClickerSceneButtonEdit);
         break;
     case CcProfEditButtons:

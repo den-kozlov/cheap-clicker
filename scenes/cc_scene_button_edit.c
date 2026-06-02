@@ -19,7 +19,7 @@ bool cc_scene_button_edit_on_event(void* context, SceneManagerEvent event) {
     CheapClickerApp* app = context;
     if(event.type != SceneManagerEventTypeCustom || event.event != 0) return false;
     CcProfile* p = &app->profiles[app->active_profile_idx];
-    uint32_t prev = scene_manager_get_scene_state(app->scene_manager, CheapClickerSceneProfileEdit);
+    uint8_t prev = app->button_edit_mode;
     if(prev == 0xFF) {
         strlcpy(p->buttons[app->edit_button_idx].name, app->text_input_buf, CC_MAX_NAME_LEN);
     } else if(prev == 0) {

@@ -52,6 +52,10 @@ void cc_scene_calibrate_on_enter(void* context) {
     cc_calibrate_view_set_move_callback(app->calibrate_view, cc_cal_move_cb, app);
     cc_calibrate_view_set_label(app->calibrate_view, "TRIGGER");
     cc_calibrate_view_set_coords(app->calibrate_view, 0, 0);
+    if(app->profile_count == 0) {
+        scene_manager_previous_scene(app->scene_manager);
+        return;
+    }
     if(!app->ble_hid_profile) cc_ble_start(app);
     cc_ble_reset_cursor(app);
     view_dispatcher_switch_to_view(app->view_dispatcher, CheapClickerViewCalibrate);

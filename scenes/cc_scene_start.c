@@ -24,10 +24,16 @@ bool cc_scene_start_on_event(void* context, SceneManagerEvent event) {
     CheapClickerApp* app = context;
     if(event.type != SceneManagerEventTypeCustom) return false;
     scene_manager_set_scene_state(app->scene_manager, CheapClickerSceneStart, event.event);
-    if(event.event == CcStartProfiles)
+    if(event.event == CcStartProfiles) {
         scene_manager_next_scene(app->scene_manager, CheapClickerSceneProfiles);
-    else  // Run or Scripts
-        scene_manager_next_scene(app->scene_manager, CheapClickerSceneScripts);
+    } else if(event.event == CcStartRun || event.event == CcStartScripts) {
+        if(app->profile_count == 0) {
+            // No profiles — go to Profiles scene instead to add one
+            scene_manager_next_scene(app->scene_manager, CheapClickerSceneProfiles);
+        } else {
+            scene_manager_next_scene(app->scene_manager, CheapClickerSceneScripts);
+        }
+    }
     return true;
 }
 

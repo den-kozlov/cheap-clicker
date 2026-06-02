@@ -25,8 +25,7 @@ bool cc_scene_buttons_on_event(void* context, SceneManagerEvent event) {
     strlcpy(app->text_input_buf,
             app->profiles[app->active_profile_idx].buttons[app->edit_button_idx].name,
             CC_MAX_NAME_LEN);
-    // Store sentinel 0xFF in scene state to indicate "rename button" path
-    scene_manager_set_scene_state(app->scene_manager, CheapClickerSceneProfileEdit, 0xFF);
+    app->button_edit_mode = 0xFF;
     scene_manager_next_scene(app->scene_manager, CheapClickerSceneButtonEdit);
     return true;
 }
