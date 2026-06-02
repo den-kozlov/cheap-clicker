@@ -17,6 +17,7 @@
 
 #include "scenes/cc_scene.h"
 #include "views/cc_start_view.h"
+#include "views/cc_autoclick_view.h"
 
 #define CC_MAX_BUTTONS  17
 #define CC_MAX_PROFILES  5
@@ -70,11 +71,13 @@ typedef enum {
     CheapClickerViewRun,
     CheapClickerViewStart,
     CheapClickerViewManual,
+    CheapClickerViewAutoclick,
     CheapClickerViewCount,
 } CheapClickerView;
 
 // Forward declarations
 typedef struct CcScript CcScript;
+typedef struct CcAutoclick CcAutoclick;
 typedef struct CcCalibrateView CcCalibrateView;
 typedef struct CcRunView CcRunView;
 typedef struct CcManualView CcManualView;
@@ -95,6 +98,8 @@ typedef struct {
     CcRunView* run_view;
     CcStartView* start_view;
     CcManualView* manual_view;
+    CcAutoclickView* autoclick_view;
+    CcAutoclick*     autoclick;
 
     CcButtonDef buttons[CC_MAX_BUTTONS];  // global button definitions
     uint8_t button_count;

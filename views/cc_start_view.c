@@ -77,6 +77,20 @@ static void cc_start_view_draw(Canvas* canvas, void* _m) {
         canvas_set_color(canvas, ColorBlack);
     }
 
+    // Autoclick item (only when has_device)
+    if(m->show_scripts) {
+        row++;
+        uint8_t iy = ITEMS_Y0 + (row - 1) * ITEM_H;
+        if(m->cursor == row) {
+            canvas_set_color(canvas, ColorBlack);
+            canvas_draw_box(canvas, 0, iy, 128, ITEM_H);
+            canvas_set_color(canvas, ColorWhite);
+        }
+        canvas_set_font(canvas, FontPrimary);
+        canvas_draw_str_aligned(canvas, 4, iy + ITEM_H - 2, AlignLeft, AlignBottom, "Autoclick");
+        canvas_set_color(canvas, ColorBlack);
+    }
+
     // Options item (always visible, last row)
     row++;
     {
@@ -132,6 +146,8 @@ static bool cc_start_view_input(InputEvent* event, void* ctx) {
             if(v->cb) v->cb(v->cb_ctx, CcStartViewEventScripts);
         } else if(cursor == 2 && has_device) {
             if(v->cb) v->cb(v->cb_ctx, CcStartViewEventManual);
+        } else if(cursor == 3 && has_device) {
+            if(v->cb) v->cb(v->cb_ctx, CcStartViewEventAutoclick);
         } else {
             // Options — last item, cursor == item_count - 1
             if(v->cb) v->cb(v->cb_ctx, CcStartViewEventOptions);
@@ -192,7 +208,7 @@ void cc_start_view_update(CcStartView* v, const char* device_name, bool show_scr
                 m->has_device = false;
             }
             m->show_scripts = show_scripts;
-            m->item_count = 1 + (show_scripts ? 2 : 0) + 1; // device + optional scripts+manual + options
+            m->item_count = 1 + (show_scripts ? 3 : 0) + 1; // device + optional scripts+manual+autoclick + options
             if(m->cursor >= m->item_count) m->cursor = 0;
         },
         true);

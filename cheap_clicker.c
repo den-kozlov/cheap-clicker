@@ -6,7 +6,9 @@
 #include "helpers/cc_ble.h"
 #include "helpers/cc_script.h"
 #include "helpers/cc_manual.h"
+#include "helpers/cc_autoclick.h"
 #include "views/cc_manual_view.h"
+#include "views/cc_autoclick_view.h"
 
 static bool cc_signal_handler(uint32_t signal, void* arg, void* context) {
     UNUSED(arg);
@@ -90,6 +92,14 @@ CheapClickerApp* cheap_clicker_alloc(void) {
         CheapClickerViewManual,
         cc_manual_view_get_view(app->manual_view));
 
+    app->autoclick_view = cc_autoclick_view_alloc();
+    view_dispatcher_add_view(
+        app->view_dispatcher,
+        CheapClickerViewAutoclick,
+        cc_autoclick_view_get_view(app->autoclick_view));
+
+    app->autoclick = cc_autoclick_alloc();
+
     app->script_path = furi_string_alloc();
     app->profile_count = 0;
     app->active_profile_idx = CC_PROFILE_IDX_NONE;
@@ -125,6 +135,13 @@ void cheap_clicker_free(CheapClickerApp* app) {
     cc_start_view_free(app->start_view);
     view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewManual);
     cc_manual_view_free(app->manual_view);
+
+    if(app->autoclick) {
+        cc_autoclick_free(app->autoclick);
+        app->autoclick = NULL;
+    }
+    view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewAutoclick);
+    cc_autoclick_view_free(app->autoclick_view);
 
     scene_manager_free(app->scene_manager);
     view_dispatcher_free(app->view_dispatcher);
