@@ -9,7 +9,7 @@
 // Module-level singleton state
 static int16_t s_cur_x = 0;
 static int16_t s_cur_y = 0;
-static bool s_connected = false;
+static volatile bool s_connected = false;
 
 // Internal BLE status callback
 static void cc_ble_status_cb(BtStatus status, void* context) {
@@ -33,8 +33,7 @@ void cc_ble_start(CheapClickerApp* app) {
 
     // device_name_prefix must be < 8 chars — truncate ble_name to 7 chars
     char name_prefix[8];
-    strncpy(name_prefix, profile->ble_name, 7);
-    name_prefix[7] = '\0';
+    snprintf(name_prefix, sizeof(name_prefix), "%.7s", profile->ble_name);
 
     BleProfileHidParams params = {
         .device_name_prefix = name_prefix,
@@ -117,14 +116,15 @@ void cc_ble_press_button(
     furi_assert(app);
 
     if(!app->ble_hid_profile) return;
+    FuriHalBleProfileBase* profile = app->ble_hid_profile;  // snapshot
 
     cc_ble_reset_cursor(app);
     cc_ble_move_to(app, trigger_x, trigger_y);
-    ble_profile_hid_mouse_press(app->ble_hid_profile, HID_MOUSE_BTN_LEFT);
+    ble_profile_hid_mouse_press(profile, HID_MOUSE_BTN_LEFT);
     furi_delay_ms(panel_delay_ms);
     cc_ble_move_to(app, btn_x, btn_y);
     furi_delay_ms(80);
-    ble_profile_hid_mouse_release(app->ble_hid_profile, HID_MOUSE_BTN_LEFT);
+    ble_profile_hid_mouse_release(profile, HID_MOUSE_BTN_LEFT);
     furi_delay_ms(50);
 }
 
