@@ -1,10 +1,11 @@
 #include "cc_run_view.h"
-#include <stdlib.h>
+#include <furi.h>
 
 struct CcRunView { View* view; };
 
 CcRunView* cc_run_view_alloc(void) {
     CcRunView* v = malloc(sizeof(CcRunView));
+    furi_check(v != NULL);
     v->view = view_alloc();
     return v;
 }

@@ -2,8 +2,8 @@
 
 #include <furi.h>
 #include <furi_hal_bt.h>
-#include <furi_hal_usb_hid.h>
-#include <bt/bt_service/bt.h>
+#include <furi_hal_usb_hid.h>  // HID_MOUSE_BTN_LEFT/RIGHT constants shared with BLE HID
+#include <bt/bt_service/bt.h>  // Bt record, bt_disconnect, bt_keys_storage_set_storage_path
 #include <gui/gui.h>
 #include <gui/view_dispatcher.h>
 #include <gui/scene_manager.h>
@@ -19,6 +19,8 @@
 #define CC_MAX_BUTTONS  17
 #define CC_MAX_PROFILES  5
 #define CC_MAX_NAME_LEN 32
+#define CC_MAX_BLE_NAME_LEN 29  // BT advertising PDU limit (29 bytes usable)
+#define CC_BUTTON_IDX_NONE 0xFF
 
 typedef struct {
     char name[CC_MAX_NAME_LEN];
@@ -28,8 +30,8 @@ typedef struct {
 
 typedef struct {
     char name[CC_MAX_NAME_LEN];
-    char ble_name[CC_MAX_NAME_LEN];
-    char keys_path[128];
+    char ble_name[CC_MAX_BLE_NAME_LEN];
+    char keys_path[128];  // storage path to per-profile bt.keys file; 128 bytes covers longest SD path
     int16_t trigger_x;
     int16_t trigger_y;
     uint8_t button_count;

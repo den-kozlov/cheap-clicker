@@ -1,10 +1,11 @@
 #include "cc_calibrate_view.h"
-#include <stdlib.h>
+#include <furi.h>
 
 struct CcCalibrateView { View* view; };
 
 CcCalibrateView* cc_calibrate_view_alloc(void) {
     CcCalibrateView* v = malloc(sizeof(CcCalibrateView));
+    furi_check(v != NULL);
     v->view = view_alloc();
     return v;
 }
