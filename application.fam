@@ -1,0 +1,11 @@
+App(
+    appid="cheap_clicker",
+    name="Cheap Clicker",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="cheap_clicker_app",
+    requires=["bt"],
+    stack_size=4 * 1024,
+    fap_libs=["ble_profile"],
+    fap_icon="icon.png",
+    fap_category="Tools",
+)

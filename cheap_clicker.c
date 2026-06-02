@@ -1,0 +1,100 @@
+#include "cheap_clicker_i.h"
+#include "views/cc_calibrate_view.h"
+#include "views/cc_run_view.h"
+
+static bool cc_custom_event_callback(void* context, uint32_t event) {
+    furi_assert(context);
+    CheapClickerApp* app = context;
+    return scene_manager_handle_custom_event(app->scene_manager, event);
+}
+
+static bool cc_back_event_callback(void* context) {
+    furi_assert(context);
+    CheapClickerApp* app = context;
+    return scene_manager_handle_back_event(app->scene_manager);
+}
+
+CheapClickerApp* cheap_clicker_alloc(void) {
+    CheapClickerApp* app = malloc(sizeof(CheapClickerApp));
+
+    app->gui = furi_record_open(RECORD_GUI);
+    app->bt = furi_record_open(RECORD_BT);
+    app->notifications = furi_record_open(RECORD_NOTIFICATION);
+    app->ble_hid_profile = NULL;
+
+    app->view_dispatcher = view_dispatcher_alloc();
+    view_dispatcher_set_event_callback_context(app->view_dispatcher, app);
+    view_dispatcher_set_custom_event_callback(app->view_dispatcher, cc_custom_event_callback);
+    view_dispatcher_set_navigation_event_callback(app->view_dispatcher, cc_back_event_callback);
+    view_dispatcher_attach_to_gui(app->view_dispatcher, app->gui, ViewDispatcherTypeFullscreen);
+
+    app->scene_manager = scene_manager_alloc(&cc_scene_handlers, app);
+
+    app->submenu = submenu_alloc();
+    view_dispatcher_add_view(
+        app->view_dispatcher, CheapClickerViewSubmenu, submenu_get_view(app->submenu));
+
+    app->text_input = text_input_alloc();
+    view_dispatcher_add_view(
+        app->view_dispatcher, CheapClickerViewTextInput, text_input_get_view(app->text_input));
+
+    app->var_item_list = variable_item_list_alloc();
+    view_dispatcher_add_view(
+        app->view_dispatcher,
+        CheapClickerViewVariableList,
+        variable_item_list_get_view(app->var_item_list));
+
+    app->calibrate_view = cc_calibrate_view_alloc();
+    view_dispatcher_add_view(
+        app->view_dispatcher,
+        CheapClickerViewCalibrate,
+        cc_calibrate_view_get_view(app->calibrate_view));
+
+    app->run_view = cc_run_view_alloc();
+    view_dispatcher_add_view(
+        app->view_dispatcher,
+        CheapClickerViewRun,
+        cc_run_view_get_view(app->run_view));
+
+    app->script_path = furi_string_alloc();
+    app->profile_count = 0;
+    app->active_profile_idx = 0;
+    app->script = NULL;
+
+    return app;
+}
+
+void cheap_clicker_free(CheapClickerApp* app) {
+    furi_assert(app);
+
+    view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewSubmenu);
+    submenu_free(app->submenu);
+    view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewTextInput);
+    text_input_free(app->text_input);
+    view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewVariableList);
+    variable_item_list_free(app->var_item_list);
+    view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewCalibrate);
+    cc_calibrate_view_free(app->calibrate_view);
+    view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewRun);
+    cc_run_view_free(app->run_view);
+
+    scene_manager_free(app->scene_manager);
+    view_dispatcher_free(app->view_dispatcher);
+
+    furi_string_free(app->script_path);
+
+    furi_record_close(RECORD_GUI);
+    furi_record_close(RECORD_BT);
+    furi_record_close(RECORD_NOTIFICATION);
+
+    free(app);
+}
+
+int32_t cheap_clicker_app(void* p) {
+    UNUSED(p);
+    CheapClickerApp* app = cheap_clicker_alloc();
+    scene_manager_next_scene(app->scene_manager, CheapClickerSceneStart);
+    view_dispatcher_run(app->view_dispatcher);
+    cheap_clicker_free(app);
+    return 0;
+}
