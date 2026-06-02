@@ -1,6 +1,9 @@
 #include "cheap_clicker_i.h"
 #include "views/cc_calibrate_view.h"
 #include "views/cc_run_view.h"
+#include "helpers/cc_profile.h"
+#include "helpers/cc_ble.h"
+#include "helpers/cc_script.h"
 
 static bool cc_custom_event_callback(void* context, uint32_t event) {
     furi_assert(context);
@@ -62,11 +65,18 @@ CheapClickerApp* cheap_clicker_alloc(void) {
     app->active_profile_idx = 0;
     app->script = NULL;
 
+    app->script = cc_script_alloc(app);
+
     return app;
 }
 
 void cheap_clicker_free(CheapClickerApp* app) {
     furi_assert(app);
+
+    if(app->script) {
+        cc_script_free(app->script);
+        app->script = NULL;
+    }
 
     view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewSubmenu);
     submenu_free(app->submenu);
@@ -94,8 +104,25 @@ void cheap_clicker_free(CheapClickerApp* app) {
 int32_t cheap_clicker_app(void* p) {
     UNUSED(p);
     CheapClickerApp* app = cheap_clicker_alloc();
+
+    cc_profile_load_all(app);
+    cc_profile_load_active(app);
+
+    bt_disconnect(app->bt);
+    furi_delay_ms(200);
+
+    if(app->profile_count > 0) {
+        cc_ble_start(app);
+    }
+
     scene_manager_next_scene(app->scene_manager, CheapClickerSceneStart);
     view_dispatcher_run(app->view_dispatcher);
+
+    if(app->profile_count > 0 && app->ble_hid_profile != NULL) {
+        cc_ble_stop(app);
+    }
+    cc_profile_save_active(app);
+
     cheap_clicker_free(app);
     return 0;
 }
