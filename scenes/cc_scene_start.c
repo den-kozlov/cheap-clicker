@@ -9,12 +9,16 @@ static void cc_start_cb(void* context, uint32_t index) {
 void cc_scene_start_on_enter(void* context) {
     CheapClickerApp* app = context;
     submenu_reset(app->submenu);
-    char run_label[48] = "Run Script";
-    if(app->profile_count > 0)
-        snprintf(run_label, sizeof(run_label), "Run [%s]", app->profiles[app->active_profile_idx].name);
-    submenu_add_item(app->submenu, run_label, CcStartRun, cc_start_cb, app);
-    submenu_add_item(app->submenu, "Profiles", CcStartProfiles, cc_start_cb, app);
-    submenu_add_item(app->submenu, "Scripts", CcStartScripts, cc_start_cb, app);
+    if(app->active_profile_idx == CC_PROFILE_IDX_NONE) {
+        submenu_add_item(app->submenu, "Devices", CcStartProfiles, cc_start_cb, app);
+    } else {
+        char run_label[48];
+        snprintf(run_label, sizeof(run_label), "Run [%s]",
+                 app->profiles[app->active_profile_idx].name);
+        submenu_add_item(app->submenu, run_label, CcStartRun, cc_start_cb, app);
+        submenu_add_item(app->submenu, "Devices", CcStartProfiles, cc_start_cb, app);
+        submenu_add_item(app->submenu, "Scripts", CcStartScripts, cc_start_cb, app);
+    }
     submenu_set_selected_item(app->submenu,
         scene_manager_get_scene_state(app->scene_manager, CheapClickerSceneStart));
     view_dispatcher_switch_to_view(app->view_dispatcher, CheapClickerViewSubmenu);
