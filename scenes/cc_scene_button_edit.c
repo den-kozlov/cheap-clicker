@@ -8,7 +8,7 @@ static void cc_button_edit_done(void* context) {
 void cc_scene_button_edit_on_enter(void* context) {
     CheapClickerApp* app = context;
     text_input_reset(app->text_input);
-    text_input_set_header_text(app->text_input, "Enter name:");
+    text_input_set_header_text(app->text_input, "Button name:");
     text_input_set_result_callback(
         app->text_input, cc_button_edit_done, app,
         app->text_input_buf, CC_MAX_NAME_LEN, false);

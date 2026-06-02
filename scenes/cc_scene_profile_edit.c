@@ -54,8 +54,9 @@ bool cc_scene_profile_edit_on_event(void* context, SceneManagerEvent event) {
         scene_manager_next_scene(app->scene_manager, CheapClickerSceneCalibrate);
         break;
     case CcProfEditSetActive:
-        cc_ble_switch_profile(app, app->active_profile_idx);
         cc_profile_save_active(app);
+        if(app->ble_hid_profile) cc_ble_stop(app);
+        cc_ble_start(app);
         break;
     case CcProfEditDelete:
         cc_profile_delete(app, app->active_profile_idx);

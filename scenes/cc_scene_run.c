@@ -26,6 +26,8 @@ void cc_scene_run_on_enter(void* context) {
     CheapClickerApp* app = context;
     cc_run_view_set_button_callback(app->run_view, cc_run_btn_cb, app);
 
+    if(!app->ble_hid_profile) cc_ble_start(app);
+
     const char* path = furi_string_get_cstr(app->script_path);
     if(!cc_script_open(app->script, path)) {
         scene_manager_previous_scene(app->scene_manager);

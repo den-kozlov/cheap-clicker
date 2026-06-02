@@ -108,9 +108,6 @@ int32_t cheap_clicker_app(void* p) {
     cc_profile_load_all(app);
     cc_profile_load_active(app);
 
-    bt_disconnect(app->bt);
-    furi_delay_ms(200);
-
     if(app->profile_count > 0) {
         cc_ble_start(app);
     }

@@ -15,13 +15,9 @@ static void advance_calibrate(CheapClickerApp* app) {
         return;
     }
     char label[48];
-    if(s_calibrate_step == 0) {
-        strlcpy(label, "TRIGGER", sizeof(label));
-    } else {
-        snprintf(label, sizeof(label), "[%u/%u] %s",
-                 s_calibrate_step, p->button_count,
-                 p->buttons[s_calibrate_step - 1].name);
-    }
+    snprintf(label, sizeof(label), "[%u/%u] %s",
+             s_calibrate_step, p->button_count,
+             p->buttons[s_calibrate_step - 1].name);
     cc_calibrate_view_set_label(app->calibrate_view, label);
     cc_calibrate_view_set_coords(app->calibrate_view, 0, 0);
     cc_ble_reset_cursor(app);
@@ -56,6 +52,7 @@ void cc_scene_calibrate_on_enter(void* context) {
     cc_calibrate_view_set_move_callback(app->calibrate_view, cc_cal_move_cb, app);
     cc_calibrate_view_set_label(app->calibrate_view, "TRIGGER");
     cc_calibrate_view_set_coords(app->calibrate_view, 0, 0);
+    if(!app->ble_hid_profile) cc_ble_start(app);
     cc_ble_reset_cursor(app);
     view_dispatcher_switch_to_view(app->view_dispatcher, CheapClickerViewCalibrate);
 }
