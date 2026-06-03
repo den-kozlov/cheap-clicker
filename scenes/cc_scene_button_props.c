@@ -7,7 +7,8 @@ typedef enum {
     CcBtnPropsName = 0,
     CcBtnPropsType,
     CcBtnPropsSave,
-    CcBtnPropsDelete,
+    CcBtnPropsDelete,     // only for existing buttons
+    CcBtnPropsCalibrate,  // only for existing buttons when connected
 } CcBtnPropsIdx;
 
 static void cc_btn_props_type_cb(VariableItem* item) {
@@ -62,6 +63,13 @@ static void cc_btn_props_rebuild(CheapClickerApp* app) {
     // Delete (only for existing buttons)
     if(!app->is_new_button) {
         variable_item_list_add(app->var_item_list, "Delete", 0, NULL, NULL);
+    }
+
+    // Calibrate (only for existing buttons when BLE connected and profile selected)
+    if(!app->is_new_button &&
+       app->active_profile_idx != CC_PROFILE_IDX_NONE &&
+       app->ble_hid_profile != NULL) {
+        variable_item_list_add(app->var_item_list, "Calibrate", 0, NULL, NULL);
     }
 
     variable_item_list_set_enter_callback(app->var_item_list, cc_btn_props_enter_cb, app);
@@ -121,6 +129,19 @@ bool cc_scene_button_props_on_event(void* context, SceneManagerEvent event) {
             }
             scene_manager_previous_scene(app->scene_manager);
             return true;
+
+        case CcBtnPropsCalibrate: {
+            if(app->edit_button_staging.type == CcButtonTypeDragAndRelease &&
+               app->profiles[app->active_profile_idx].trigger_x == 0 &&
+               app->profiles[app->active_profile_idx].trigger_y == 0) {
+                cc_btn_props_show_error(app, "Calibrate trigger\nfrom device settings");
+                return true;
+            }
+            app->calibrate_single_mode = true;
+            app->calibrate_target_btn = app->edit_button_idx;
+            scene_manager_next_scene(app->scene_manager, CheapClickerSceneCalibrate);
+            return true;
+        }
 
         default:
             break;
