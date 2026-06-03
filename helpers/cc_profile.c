@@ -398,10 +398,19 @@ void cc_profile_save_active(CheapClickerApp* app) {
                 break;
             uint32_t active = app->active_profile_idx;
             if(!flipper_format_write_uint32(fff, "ActiveProfile", &active, 1)) break;
-            uint32_t a0 = (uint32_t)(app->accel[0] * 1000.0f);
-            if(!flipper_format_write_uint32(fff, "Accel0", &a0, 1)) break;
-            uint32_t a1 = (uint32_t)(app->accel[1] * 1000.0f);
-            if(!flipper_format_write_uint32(fff, "Accel1", &a1, 1)) break;
+            uint32_t ms = app->move_step;
+            if(!flipper_format_write_uint32(fff, "MoveStep", &ms, 1)) break;
+            uint32_t md = app->move_delay_ms;
+            if(!flipper_format_write_uint32(fff, "MoveDelayMs", &md, 1)) break;
+            // Quadratic accel coefficients stored as int × 100000
+            uint32_t ac0 = (uint32_t)((app->accel_c[0] + 10.0f) * 100000.0f);
+            if(!flipper_format_write_uint32(fff, "AccelC0", &ac0, 1)) break;
+            uint32_t ac1 = (uint32_t)((app->accel_c[1] + 10.0f) * 100000.0f);
+            if(!flipper_format_write_uint32(fff, "AccelC1", &ac1, 1)) break;
+            uint32_t ac2 = (uint32_t)((app->accel_c[2] + 10.0f) * 100000.0f);
+            if(!flipper_format_write_uint32(fff, "AccelC2", &ac2, 1)) break;
+            uint32_t sd = app->sync_dist;
+            if(!flipper_format_write_uint32(fff, "SyncDist", &sd, 1)) break;
         } while(0);
         flipper_format_file_close(fff);
     }
@@ -427,13 +436,30 @@ void cc_profile_load_active(CheapClickerApp* app) {
         if(!flipper_format_read_uint32(fff, "ActiveProfile", &active, 1)) break;
         app->active_profile_idx = (uint8_t)active;
 
-        uint32_t a0 = 1000;
-        if(flipper_format_read_uint32(fff, "Accel0", &a0, 1))
-            app->accel[0] = (float)a0 / 1000.0f;
+        uint32_t ms = 10; // default = CC_ACCEL_CAL_STEP_1
+        if(flipper_format_read_uint32(fff, "MoveStep", &ms, 1))
+            app->move_step = (uint8_t)ms;
 
-        uint32_t a1 = 1000;
-        if(flipper_format_read_uint32(fff, "Accel1", &a1, 1))
-            app->accel[1] = (float)a1 / 1000.0f;
+        uint32_t md = 1; // default = CC_ACCEL_CAL_DELAY_1
+        if(flipper_format_read_uint32(fff, "MoveDelayMs", &md, 1))
+            app->move_delay_ms = (uint8_t)md;
+
+        // Quadratic accel coefficients; default: a(v)=1 (c0=1, c1=c2=0)
+        uint32_t ac0 = (uint32_t)((1.0f + 10.0f) * 100000.0f);
+        if(flipper_format_read_uint32(fff, "AccelC0", &ac0, 1))
+            app->accel_c[0] = (float)ac0 / 100000.0f - 10.0f;
+
+        uint32_t ac1 = (uint32_t)((0.0f + 10.0f) * 100000.0f);
+        if(flipper_format_read_uint32(fff, "AccelC1", &ac1, 1))
+            app->accel_c[1] = (float)ac1 / 100000.0f - 10.0f;
+
+        uint32_t ac2 = (uint32_t)((0.0f + 10.0f) * 100000.0f);
+        if(flipper_format_read_uint32(fff, "AccelC2", &ac2, 1))
+            app->accel_c[2] = (float)ac2 / 100000.0f - 10.0f;
+
+        uint32_t sd = 0;
+        if(flipper_format_read_uint32(fff, "SyncDist", &sd, 1))
+            app->sync_dist = (uint16_t)sd;
     } while(0);
 
     flipper_format_file_close(fff);
