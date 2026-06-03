@@ -8,7 +8,7 @@ static const uint8_t DELAY_VALUES[] = {1, 2, 3, 5, 8, 10, 15, 20};
 #define STEP_COUNT  (sizeof(STEP_VALUES)  / sizeof(STEP_VALUES[0]))
 #define DELAY_COUNT (sizeof(DELAY_VALUES) / sizeof(DELAY_VALUES[0]))
 
-static const uint32_t SYNC_VALUES[] = {0, 5000, 10000, 20000, 40000, 60000, 80000, 100000, 150000, 200000, 20000};
+static const uint32_t SYNC_VALUES[] = {0, 5000, 10000, 20000, 40000, 60000, 80000, 100000, 150000, 200000, 250000};
 #define SYNC_COUNT (sizeof(SYNC_VALUES) / sizeof(SYNC_VALUES[0]))
 
 static uint8_t find_sync_idx(uint32_t val) {
@@ -92,7 +92,7 @@ void cc_scene_move_speed_on_enter(void* context) {
 
     static char sync_buf[16];
 
-    item = variable_item_list_add(vil, "Cursor Sync", SYNC_COUNT, sync_change_cb, app);
+    item = variable_item_list_add(vil, "Position Sync", SYNC_COUNT, sync_change_cb, app);
     uint8_t sci = find_sync_idx(app->sync_dist);
     variable_item_set_current_value_index(item, sci);
     sync_fmt(sync_buf, sizeof(sync_buf), SYNC_VALUES[sci]);

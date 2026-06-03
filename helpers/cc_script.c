@@ -221,7 +221,7 @@ static uint32_t cc_execute_instr(CcScript* s) {
             cc_ble_click_at(app, calib->x, calib->y);
         } else {
             cc_ble_press_button(
-                app, profile->trigger_x, profile->trigger_y, calib->x, calib->y, 200);
+                app, profile->trigger_x, profile->trigger_y, calib->x, calib->y, 100);
         }
         s->pc++;
         return 0;

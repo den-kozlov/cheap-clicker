@@ -3,7 +3,7 @@
 typedef enum {
     CcOptionsItemButtons = 0,
     CcOptionsItemSpeedTune = 1,
-    CcOptionsItemMoveSpeed = 2,
+    CcOptionsItemCursorOptions = 2,
 } CcOptionsItem;
 
 static void cc_options_cb(void* context, uint32_t index) {
@@ -15,7 +15,7 @@ void cc_scene_options_on_enter(void* context) {
     submenu_reset(app->submenu);
     submenu_add_item(app->submenu, "Buttons", CcOptionsItemButtons, cc_options_cb, app);
     submenu_add_item(app->submenu, "Speed Tune", CcOptionsItemSpeedTune, cc_options_cb, app);
-    submenu_add_item(app->submenu, "Cursor Options", CcOptionsItemMoveSpeed, cc_options_cb, app);
+    submenu_add_item(app->submenu, "Cursor Options", CcOptionsItemCursorOptions, cc_options_cb, app);
     submenu_set_selected_item(
         app->submenu,
         scene_manager_get_scene_state(app->scene_manager, CheapClickerSceneOptions));
@@ -30,8 +30,8 @@ bool cc_scene_options_on_event(void* context, SceneManagerEvent event) {
         scene_manager_next_scene(app->scene_manager, CheapClickerSceneButtons);
     } else if(event.event == CcOptionsItemSpeedTune) {
         scene_manager_next_scene(app->scene_manager, CheapClickerSceneSpeedTune);
-    } else if(event.event == CcOptionsItemMoveSpeed) {
-        scene_manager_next_scene(app->scene_manager, CheapClickerSceneMoveSpeed);
+    } else if(event.event == CcOptionsItemCursorOptions) {
+        scene_manager_next_scene(app->scene_manager, CheapClickerSceneCursorOptions);
     }
     return true;
 }

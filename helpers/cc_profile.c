@@ -459,7 +459,7 @@ void cc_profile_load_active(CheapClickerApp* app) {
 
         uint32_t sd = 0;
         if(flipper_format_read_uint32(fff, "SyncDist", &sd, 1))
-            app->sync_dist = (uint16_t)sd;
+            app->sync_dist = sd;
     } while(0);
 
     flipper_format_file_close(fff);

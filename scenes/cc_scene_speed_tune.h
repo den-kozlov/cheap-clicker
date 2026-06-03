@@ -11,6 +11,7 @@ typedef struct {
     uint8_t m_cur;       // current test step count (midpoint)
     float   result[2];   // measured accel multipliers per cal point
     bool    done[2];     // which cal points are finished
+    bool    ref_drawn;   // true after reference line has been drawn for current cal_point
 } CcAccelTuneState;
 
 CcAccelTuneState* cc_accel_tune_state_alloc(void);

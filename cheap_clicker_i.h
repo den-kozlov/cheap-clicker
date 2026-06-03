@@ -112,7 +112,7 @@ typedef struct {
     // Global cursor movement speed; used by cc_ble_move_to
     uint8_t move_step;      // px per HID report for bulk phase
     uint8_t move_delay_ms;  // ms between reports for bulk phase
-    uint16_t sync_dist;     // 0 = disabled; Chebyshev px threshold for auto cursor reset
+    uint32_t sync_dist;     // 0 = disabled; Chebyshev px threshold for auto cursor reset
 
     CcButtonDef buttons[CC_MAX_BUTTONS];  // global button definitions
     uint8_t button_count;

@@ -81,7 +81,7 @@ bool cc_scene_manual_on_event(void* context, SceneManagerEvent event) {
                     app,
                     p->trigger_x, p->trigger_y,
                     p->calib[btn_idx].x, p->calib[btn_idx].y,
-                    300);
+                    100);
             }
         }
         return true;

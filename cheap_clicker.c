@@ -106,8 +106,11 @@ CheapClickerApp* cheap_clicker_alloc(void) {
 
     app->monument = cc_monument_alloc();
     app->accel_tune = cc_accel_tune_state_alloc();
-    app->accel[0] = 1.0f;
-    app->accel[1] = 1.0f;
+    app->accel_c[0] = 1.0f;
+    app->accel_c[1] = 0.0f;
+    app->accel_c[2] = 0.0f;
+    app->move_step     = CC_ACCEL_CAL_STEP_1;   // default: same speed as fast cal point
+    app->move_delay_ms = CC_ACCEL_CAL_DELAY_1;
 
     app->script_path = furi_string_alloc();
     app->profile_count = 0;

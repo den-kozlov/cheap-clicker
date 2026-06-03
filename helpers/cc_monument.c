@@ -33,7 +33,7 @@ static int32_t cc_monument_worker(void* context) {
                 cc_ble_click_at(app, p->calib[h].x, p->calib[h].y);
             } else {
                 cc_ble_press_button(app, p->trigger_x, p->trigger_y,
-                                    p->calib[h].x, p->calib[h].y, 300);
+                                    p->calib[h].x, p->calib[h].y, 100);
             }
         }
     }
