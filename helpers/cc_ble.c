@@ -148,8 +148,6 @@ void cc_ble_draw_tune_lines(
     furi_assert(app);
     if(!app->ble_hid_profile) return;
 
-    const uint8_t POS_STEP = 5;
-    const uint8_t POS_DELAY = 30;
     const uint8_t N_STEPS = 20;
     const int16_t Y_SPACING = 40;
     const int16_t x_start = s_cur_x;
@@ -159,7 +157,8 @@ void cc_ble_draw_tune_lines(
         int16_t y = y_start + i * Y_SPACING;
         uint8_t line_delay = (i == 0) ? ref_delay_ms : test_delays_ms[i - 1];
 
-        cc_ble_move_to_raw(app, x_start, y, POS_STEP, POS_DELAY);
+        // Reposition at the same speed as the line itself so OS acceleration cancels out
+        cc_ble_move_to_raw(app, x_start, y, step, line_delay);
         furi_delay_ms(50);
 
         ble_profile_hid_mouse_press(app->ble_hid_profile, HID_MOUSE_BTN_LEFT);
