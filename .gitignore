@@ -6,3 +6,5 @@ dist/*
 .env
 .ufbt
 **/.DS_Store
+.superpowers
+docs
