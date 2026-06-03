@@ -1,4 +1,4 @@
-#include "cc_autoclick_view.h"
+#include "cc_monument_view.h"
 #include "../cheap_clicker_i.h"
 #include <furi.h>
 #include <gui/elements.h>
@@ -11,16 +11,16 @@ typedef struct {
     uint8_t selected_btn;  // CC_BUTTON_IDX_NONE = nothing selected
     bool    is_running;
     bool    connected;
-} CcAutoclickViewModel;
+} CcMonumentViewModel;
 
-struct CcAutoclickView {
+struct CcMonumentView {
     View*                   view;
-    CcAutoclickViewCallback cb;
+    CcMonumentViewCallback cb;
     void*                   cb_ctx;
 };
 
-static void cc_autoclick_view_draw(Canvas* canvas, void* _m) {
-    CcAutoclickViewModel* m = _m;
+static void cc_monument_view_draw(Canvas* canvas, void* _m) {
+    CcMonumentViewModel* m = _m;
 
     canvas_set_font(canvas, FontPrimary);
     canvas_draw_str(canvas, 2, 12, "Button:");
@@ -34,11 +34,6 @@ static void cc_autoclick_view_draw(Canvas* canvas, void* _m) {
     } else {
         canvas_set_font(canvas, FontPrimary);
         canvas_draw_str(canvas, 50, 12, m->button_names[m->selected_btn]);
-    }
-
-    if(m->button_count > 0) {
-        canvas_set_font(canvas, FontSecondary);
-        canvas_draw_str(canvas, 118, 12, "\x75\x76");
     }
 
     bool can_start = (m->selected_btn != CC_BUTTON_IDX_NONE) && m->connected && !m->is_running;
@@ -56,8 +51,8 @@ static void cc_autoclick_view_draw(Canvas* canvas, void* _m) {
     }
 }
 
-static bool cc_autoclick_view_input(InputEvent* event, void* ctx) {
-    CcAutoclickView* v = ctx;
+static bool cc_monument_view_input(InputEvent* event, void* ctx) {
+    CcMonumentView* v = ctx;
     if(event->type != InputTypeShort) return false;
 
     uint8_t button_count = 0;
@@ -67,7 +62,7 @@ static bool cc_autoclick_view_input(InputEvent* event, void* ctx) {
 
     with_view_model(
         v->view,
-        CcAutoclickViewModel* m,
+        CcMonumentViewModel* m,
         {
             button_count = m->button_count;
             selected_btn = m->selected_btn;
@@ -81,7 +76,7 @@ static bool cc_autoclick_view_input(InputEvent* event, void* ctx) {
         if(button_count == 0) return true;
         with_view_model(
             v->view,
-            CcAutoclickViewModel* m,
+            CcMonumentViewModel* m,
             {
                 if(m->selected_btn == CC_BUTTON_IDX_NONE) {
                     m->selected_btn = m->button_count - 1;
@@ -96,7 +91,7 @@ static bool cc_autoclick_view_input(InputEvent* event, void* ctx) {
         if(button_count == 0) return true;
         with_view_model(
             v->view,
-            CcAutoclickViewModel* m,
+            CcMonumentViewModel* m,
             {
                 if(m->selected_btn == CC_BUTTON_IDX_NONE) {
                     m->selected_btn = 0;
@@ -109,9 +104,9 @@ static bool cc_autoclick_view_input(InputEvent* event, void* ctx) {
 
     case InputKeyOk:
         if(is_running) {
-            if(v->cb) v->cb(v->cb_ctx, CcAutoclickViewEventStop);
+            if(v->cb) v->cb(v->cb_ctx, CcMonumentViewEventStop);
         } else if(selected_btn != CC_BUTTON_IDX_NONE && connected) {
-            if(v->cb) v->cb(v->cb_ctx, CcAutoclickViewEventStart);
+            if(v->cb) v->cb(v->cb_ctx, CcMonumentViewEventStart);
         }
         return true;
 
@@ -120,17 +115,17 @@ static bool cc_autoclick_view_input(InputEvent* event, void* ctx) {
     }
 }
 
-CcAutoclickView* cc_autoclick_view_alloc(void) {
-    CcAutoclickView* v = malloc(sizeof(CcAutoclickView));
+CcMonumentView* cc_monument_view_alloc(void) {
+    CcMonumentView* v = malloc(sizeof(CcMonumentView));
     furi_check(v);
     v->view = view_alloc();
     view_set_context(v->view, v);
-    view_allocate_model(v->view, ViewModelTypeLocking, sizeof(CcAutoclickViewModel));
-    view_set_draw_callback(v->view, cc_autoclick_view_draw);
-    view_set_input_callback(v->view, cc_autoclick_view_input);
+    view_allocate_model(v->view, ViewModelTypeLocking, sizeof(CcMonumentViewModel));
+    view_set_draw_callback(v->view, cc_monument_view_draw);
+    view_set_input_callback(v->view, cc_monument_view_input);
     with_view_model(
         v->view,
-        CcAutoclickViewModel* m,
+        CcMonumentViewModel* m,
         { m->selected_btn = CC_BUTTON_IDX_NONE; },
         false);
     v->cb     = NULL;
@@ -138,32 +133,32 @@ CcAutoclickView* cc_autoclick_view_alloc(void) {
     return v;
 }
 
-void cc_autoclick_view_free(CcAutoclickView* v) {
+void cc_monument_view_free(CcMonumentView* v) {
     furi_assert(v);
     view_free(v->view);
     free(v);
 }
 
-View* cc_autoclick_view_get_view(CcAutoclickView* v) {
+View* cc_monument_view_get_view(CcMonumentView* v) {
     furi_assert(v);
     return v->view;
 }
 
-void cc_autoclick_view_set_callback(CcAutoclickView* v, CcAutoclickViewCallback cb, void* ctx) {
+void cc_monument_view_set_callback(CcMonumentView* v, CcMonumentViewCallback cb, void* ctx) {
     furi_assert(v);
     v->cb     = cb;
     v->cb_ctx = ctx;
 }
 
-void cc_autoclick_view_update(
-    CcAutoclickView* v,
+void cc_monument_view_update(
+    CcMonumentView* v,
     const char (*names)[32],
     uint8_t count,
     bool connected) {
     furi_assert(v);
     with_view_model(
         v->view,
-        CcAutoclickViewModel* m,
+        CcMonumentViewModel* m,
         {
             m->button_count = count;
             m->connected    = connected;
@@ -177,14 +172,14 @@ void cc_autoclick_view_update(
         true);
 }
 
-void cc_autoclick_view_set_running(CcAutoclickView* v, bool running) {
+void cc_monument_view_set_running(CcMonumentView* v, bool running) {
     furi_assert(v);
-    with_view_model(v->view, CcAutoclickViewModel* m, { m->is_running = running; }, true);
+    with_view_model(v->view, CcMonumentViewModel* m, { m->is_running = running; }, true);
 }
 
-uint8_t cc_autoclick_view_get_selected_btn(CcAutoclickView* v) {
+uint8_t cc_monument_view_get_selected_btn(CcMonumentView* v) {
     furi_assert(v);
     uint8_t sel = CC_BUTTON_IDX_NONE;
-    with_view_model(v->view, CcAutoclickViewModel* m, { sel = m->selected_btn; }, false);
+    with_view_model(v->view, CcMonumentViewModel* m, { sel = m->selected_btn; }, false);
     return sel;
 }

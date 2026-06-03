@@ -9,7 +9,7 @@ typedef enum {
     CcStartViewEventDeviceEdit,
     CcStartViewEventScripts,
     CcStartViewEventManual,
-    CcStartViewEventAutoclick,
+    CcStartViewEventMonument,
     CcStartViewEventOptions,
 } CcStartViewEvent;
 

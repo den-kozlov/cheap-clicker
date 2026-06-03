@@ -11,13 +11,14 @@
 #include <gui/modules/text_input.h>
 #include <gui/modules/variable_item_list.h>
 #include <gui/modules/popup.h>
+#include <gui/modules/dialog_ex.h>
 #include <notification/notification.h>
 #include <storage/storage.h>
 #include <ble_profile/extra_profiles/hid_profile.h>
 
 #include "scenes/cc_scene.h"
 #include "views/cc_start_view.h"
-#include "views/cc_autoclick_view.h"
+#include "views/cc_monument_view.h"
 
 #define CC_MAX_BUTTONS  17
 #define CC_MAX_PROFILES  5
@@ -71,13 +72,14 @@ typedef enum {
     CheapClickerViewRun,
     CheapClickerViewStart,
     CheapClickerViewManual,
-    CheapClickerViewAutoclick,
+    CheapClickerViewMonument,
+    CheapClickerViewDialogEx,
     CheapClickerViewCount,
 } CheapClickerView;
 
 // Forward declarations
 typedef struct CcScript CcScript;
-typedef struct CcAutoclick CcAutoclick;
+typedef struct CcMonument CcMonument;
 typedef struct CcCalibrateView CcCalibrateView;
 typedef struct CcRunView CcRunView;
 typedef struct CcManualView CcManualView;
@@ -94,12 +96,13 @@ typedef struct {
     TextInput* text_input;
     VariableItemList* var_item_list;
     Popup* popup;
+    DialogEx* dialog_ex;
     CcCalibrateView* calibrate_view;
     CcRunView* run_view;
     CcStartView* start_view;
     CcManualView* manual_view;
-    CcAutoclickView* autoclick_view;
-    CcAutoclick*     autoclick;
+    CcMonumentView* monument_view;
+    CcMonument*     monument;
 
     CcButtonDef buttons[CC_MAX_BUTTONS];  // global button definitions
     uint8_t button_count;

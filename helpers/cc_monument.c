@@ -1,18 +1,18 @@
-#include "cc_autoclick.h"
+#include "cc_monument.h"
 #include "cc_ble.h"
 #include <furi.h>
 #include <stdlib.h>
 #include <string.h>
 
-struct CcAutoclick {
+struct CcMonument {
     FuriThread*      thread;
     CheapClickerApp* app;
     uint8_t          button_idx;
     volatile bool    running;
 };
 
-static int32_t cc_autoclick_worker(void* context) {
-    CcAutoclick* ac = context;
+static int32_t cc_monument_worker(void* context) {
+    CcMonument* ac = context;
     while(ac->running) {
         CheapClickerApp* app = ac->app;
         uint8_t idx = ac->button_idx;
@@ -29,30 +29,30 @@ static int32_t cc_autoclick_worker(void* context) {
     return 0;
 }
 
-CcAutoclick* cc_autoclick_alloc(void) {
-    CcAutoclick* ac = malloc(sizeof(CcAutoclick));
+CcMonument* cc_monument_alloc(void) {
+    CcMonument* ac = malloc(sizeof(CcMonument));
     furi_check(ac);
-    memset(ac, 0, sizeof(CcAutoclick));
+    memset(ac, 0, sizeof(CcMonument));
     return ac;
 }
 
-void cc_autoclick_free(CcAutoclick* ac) {
+void cc_monument_free(CcMonument* ac) {
     furi_assert(ac);
-    cc_autoclick_stop(ac);
+    cc_monument_stop(ac);
     free(ac);
 }
 
-void cc_autoclick_start(CcAutoclick* ac, CheapClickerApp* app, uint8_t button_idx) {
+void cc_monument_start(CcMonument* ac, CheapClickerApp* app, uint8_t button_idx) {
     furi_assert(ac);
     furi_assert(!ac->running);
     ac->app = app;
     ac->button_idx = button_idx;
     ac->running = true;
-    ac->thread = furi_thread_alloc_ex("CcAutoclick", 1024, cc_autoclick_worker, ac);
+    ac->thread = furi_thread_alloc_ex("CcMonument", 1024, cc_monument_worker, ac);
     furi_thread_start(ac->thread);
 }
 
-void cc_autoclick_stop(CcAutoclick* ac) {
+void cc_monument_stop(CcMonument* ac) {
     furi_assert(ac);
     if(!ac->running) return;
     ac->running = false;
@@ -63,7 +63,7 @@ void cc_autoclick_stop(CcAutoclick* ac) {
     }
 }
 
-bool cc_autoclick_is_running(CcAutoclick* ac) {
+bool cc_monument_is_running(CcMonument* ac) {
     furi_assert(ac);
     return ac->running;
 }

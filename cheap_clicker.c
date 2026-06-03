@@ -6,9 +6,9 @@
 #include "helpers/cc_ble.h"
 #include "helpers/cc_script.h"
 #include "helpers/cc_manual.h"
-#include "helpers/cc_autoclick.h"
+#include "helpers/cc_monument.h"
 #include "views/cc_manual_view.h"
-#include "views/cc_autoclick_view.h"
+#include "views/cc_monument_view.h"
 
 static bool cc_signal_handler(uint32_t signal, void* arg, void* context) {
     UNUSED(arg);
@@ -68,6 +68,12 @@ CheapClickerApp* cheap_clicker_alloc(void) {
     view_dispatcher_add_view(
         app->view_dispatcher, CheapClickerViewPopup, popup_get_view(app->popup));
 
+    app->dialog_ex = dialog_ex_alloc();
+    view_dispatcher_add_view(
+        app->view_dispatcher,
+        CheapClickerViewDialogEx,
+        dialog_ex_get_view(app->dialog_ex));
+
     app->calibrate_view = cc_calibrate_view_alloc();
     view_dispatcher_add_view(
         app->view_dispatcher,
@@ -92,13 +98,13 @@ CheapClickerApp* cheap_clicker_alloc(void) {
         CheapClickerViewManual,
         cc_manual_view_get_view(app->manual_view));
 
-    app->autoclick_view = cc_autoclick_view_alloc();
+    app->monument_view = cc_monument_view_alloc();
     view_dispatcher_add_view(
         app->view_dispatcher,
-        CheapClickerViewAutoclick,
-        cc_autoclick_view_get_view(app->autoclick_view));
+        CheapClickerViewMonument,
+        cc_monument_view_get_view(app->monument_view));
 
-    app->autoclick = cc_autoclick_alloc();
+    app->monument = cc_monument_alloc();
 
     app->script_path = furi_string_alloc();
     app->profile_count = 0;
@@ -127,6 +133,8 @@ void cheap_clicker_free(CheapClickerApp* app) {
     variable_item_list_free(app->var_item_list);
     view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewPopup);
     popup_free(app->popup);
+    view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewDialogEx);
+    dialog_ex_free(app->dialog_ex);
     view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewCalibrate);
     cc_calibrate_view_free(app->calibrate_view);
     view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewRun);
@@ -136,12 +144,12 @@ void cheap_clicker_free(CheapClickerApp* app) {
     view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewManual);
     cc_manual_view_free(app->manual_view);
 
-    if(app->autoclick) {
-        cc_autoclick_free(app->autoclick);
-        app->autoclick = NULL;
+    if(app->monument) {
+        cc_monument_free(app->monument);
+        app->monument = NULL;
     }
-    view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewAutoclick);
-    cc_autoclick_view_free(app->autoclick_view);
+    view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewMonument);
+    cc_monument_view_free(app->monument_view);
 
     scene_manager_free(app->scene_manager);
     view_dispatcher_free(app->view_dispatcher);
