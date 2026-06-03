@@ -11,6 +11,7 @@
 static int16_t s_cur_x = 0;
 static int16_t s_cur_y = 0;
 static volatile bool s_connected = false;
+static uint32_t s_dist_accum = 0;
 
 // Internal BLE status callback
 static void cc_ble_status_cb(BtStatus status, void* context) {
@@ -53,6 +54,7 @@ void cc_ble_start(CheapClickerApp* app) {
     s_cur_x = 0;
     s_cur_y = 0;
     s_connected = false;
+    s_dist_accum = 0;
 }
 
 void cc_ble_stop(CheapClickerApp* app) {
@@ -103,21 +105,40 @@ void cc_ble_reset_cursor(CheapClickerApp* app) {
 
     s_cur_x = 400;
     s_cur_y = 0;
+    s_dist_accum = 0;
 }
 
 // ---------------------------------------------------------------------------
 // Two-phase move: bulk (calibrated speed) then fine (step=1, a≈1)
 // ---------------------------------------------------------------------------
 
+// Evaluate quadratic acceleration model at speed v = step_px / delay_ms.
+// Clamped to [1, 10] to avoid nonsensical values before calibration.
+static float cc_ble_accel_at(CheapClickerApp* app, float v) {
+    float a = app->accel_c[0] + app->accel_c[1] * v + app->accel_c[2] * v * v;
+    if(a < 1.0f) a = 1.0f;
+    if(a > 10.0f) a = 10.0f;
+    return a;
+}
+
 void cc_ble_move_to(CheapClickerApp* app, int16_t x, int16_t y) {
     furi_assert(app);
     if(!app->ble_hid_profile) return;
 
-    const uint8_t BULK_STEP  = CC_ACCEL_CAL_STEP_1;
-    const uint8_t BULK_DELAY = CC_ACCEL_CAL_DELAY_1;
+    {
+        int16_t cdx = x - s_cur_x;
+        int16_t cdy = y - s_cur_y;
+        int16_t ax = cdx < 0 ? -cdx : cdx;
+        int16_t ay = cdy < 0 ? -cdy : cdy;
+        s_dist_accum += (uint32_t)(ax > ay ? ax : ay);
+    }
+
+    const uint8_t BULK_STEP  = app->move_step;
+    const uint8_t BULK_DELAY = app->move_delay_ms;
     const uint8_t FINE_DELAY = 15;
 
-    float a_bulk = app->accel[1];
+    float v_bulk = (float)BULK_STEP / (float)BULK_DELAY;
+    float a_bulk = cc_ble_accel_at(app, v_bulk);
     // effective real pixels per bulk step; switch to fine when remaining < this
     float eff_bulk = (float)BULK_STEP * a_bulk;
 
@@ -169,6 +190,11 @@ void cc_ble_press_button(
     if(!app->ble_hid_profile) return;
     FuriHalBleProfileBase* profile = app->ble_hid_profile;
 
+    if(app->sync_dist > 0 && s_dist_accum >= (uint32_t)app->sync_dist) {
+        cc_ble_reset_cursor(app);
+        s_dist_accum = 0;
+    }
+
     cc_ble_move_to(app, trigger_x, trigger_y);
     ble_profile_hid_mouse_press(profile, HID_MOUSE_BTN_LEFT);
     furi_delay_ms(panel_delay_ms);
@@ -184,6 +210,11 @@ void cc_ble_click_at(CheapClickerApp* app, int16_t x, int16_t y) {
     if(!app->ble_hid_profile) return;
     FuriHalBleProfileBase* profile = app->ble_hid_profile;
 
+    if(app->sync_dist > 0 && s_dist_accum >= (uint32_t)app->sync_dist) {
+        cc_ble_reset_cursor(app);
+        s_dist_accum = 0;
+    }
+
     cc_ble_move_to(app, x, y);
     furi_delay_ms(5);
     ble_profile_hid_mouse_press(profile, HID_MOUSE_BTN_LEFT);
@@ -195,6 +226,11 @@ void cc_ble_click_at(CheapClickerApp* app, int16_t x, int16_t y) {
 void cc_ble_move_by(CheapClickerApp* app, int8_t dx, int8_t dy) {
     furi_assert(app);
     if(!app->ble_hid_profile) return;
+    {
+        int8_t ax = dx < 0 ? -dx : dx;
+        int8_t ay = dy < 0 ? -dy : dy;
+        s_dist_accum += (uint32_t)(ax > ay ? ax : ay);
+    }
     ble_profile_hid_mouse_move(app->ble_hid_profile, dx, dy);
     furi_delay_ms(20);
     s_cur_x += dx;
@@ -220,10 +256,10 @@ bool cc_ble_is_connected(CheapClickerApp* app) {
 
 // Draw n steps right at (step, delay_ms) with left button held, then return left at same speed
 static void draw_and_return(
-    CheapClickerApp* app,
-    uint8_t step,
-    uint8_t delay_ms,
-    uint8_t n) {
+        CheapClickerApp* app,
+        uint8_t step,
+        uint8_t delay_ms,
+        uint8_t n) {
     ble_profile_hid_mouse_press(app->ble_hid_profile, HID_MOUSE_BTN_LEFT);
     furi_delay_ms(30);
     for(uint8_t i = 0; i < n; i++) {
@@ -232,7 +268,7 @@ static void draw_and_return(
         furi_delay_ms(delay_ms);
     }
     ble_profile_hid_mouse_release(app->ble_hid_profile, HID_MOUSE_BTN_LEFT);
-    furi_delay_ms(50);
+    furi_delay_ms(150);
     // Symmetric return: same speed, same step count — OS accel cancels out
     for(uint8_t i = 0; i < n; i++) {
         ble_profile_hid_mouse_move(app->ble_hid_profile, -(int8_t)step, 0);
@@ -242,35 +278,77 @@ static void draw_and_return(
     furi_delay_ms(30);
 }
 
-void cc_ble_draw_accel_lines(CheapClickerApp* app, uint8_t cal_point, uint8_t m_test) {
+void cc_ble_draw_line(CheapClickerApp* app, uint8_t step, uint8_t delay_ms, uint16_t target_px) {
+    furi_assert(app);
+    if(!app->ble_hid_profile) return;
+
+    float v = (float)step / (float)delay_ms;
+    float a = app->accel_c[0] + app->accel_c[1] * v + app->accel_c[2] * v * v;
+    if(a < 1.0f) a = 1.0f;
+    uint8_t n = (uint8_t)((float)target_px / ((float)step * a) + 0.5f);
+    if(n < 1) n = 1;
+
+    draw_and_return(app, step, delay_ms, n);
+}
+
+void cc_ble_draw_verify_lines(CheapClickerApp* app) {
+    furi_assert(app);
+    if(!app->ble_hid_profile) return;
+
+    // 5 speed points spanning the calibrated range; last entry = current app speed
+    const uint8_t vstep[]  = {5,  5,  10, 10, app->move_step};
+    const uint8_t vdelay[] = {15, 5,  2,  1,  app->move_delay_ms};
+    const uint16_t target_px = (uint16_t)(CC_ACCEL_N_REF * CC_ACCEL_REF_STEP);
+    int16_t steps_down = CC_ACCEL_Y_SPACING / CC_ACCEL_Y_STEP;
+
+    furi_delay_ms(500);
+
+    for(uint8_t i = 0; i < 5; i++) {
+        cc_ble_draw_line(app, vstep[i], vdelay[i], target_px);
+        furi_delay_ms(150);
+
+        for(int16_t j = 0; j < steps_down; j++) {
+            ble_profile_hid_mouse_move(app->ble_hid_profile, 0, CC_ACCEL_Y_STEP);
+            s_cur_y += CC_ACCEL_Y_STEP;
+            furi_delay_ms(CC_ACCEL_Y_DELAY);
+        }
+    }
+}
+
+void cc_ble_draw_accel_lines(
+    CheapClickerApp* app,
+    uint8_t cal_point,
+    uint8_t m_test,
+    bool draw_ref) {
     furi_assert(app);
     if(!app->ble_hid_profile) return;
 
     static const uint8_t cal_step[]  = {CC_ACCEL_CAL_STEP_0,  CC_ACCEL_CAL_STEP_1};
     static const uint8_t cal_delay[] = {CC_ACCEL_CAL_DELAY_0, CC_ACCEL_CAL_DELAY_1};
 
-    // Brief pause so user can see pen starting position
+    int16_t steps_down = CC_ACCEL_Y_SPACING / CC_ACCEL_Y_STEP;
+
     furi_delay_ms(300);
 
-    // Reference line + symmetric return (cursor ends at original X)
-    draw_and_return(app, CC_ACCEL_REF_STEP, CC_ACCEL_REF_DELAY, CC_ACCEL_N_REF);
-    furi_delay_ms(200);
-
-    // Move DOWN to test line Y at step=1, fast delay (a≈1 for slow Y movement)
-    for(int16_t i = 0; i < CC_ACCEL_Y_SPACING; i++) {
-        ble_profile_hid_mouse_move(app->ble_hid_profile, 0, 1);
-        s_cur_y++;
-        furi_delay_ms(8);
+    if(draw_ref) {
+        // Draw reference once at the top, then move down to test position
+        draw_and_return(app, CC_ACCEL_REF_STEP, CC_ACCEL_REF_DELAY, CC_ACCEL_N_REF);
+        furi_delay_ms(200);
+        for(int16_t i = 0; i < steps_down; i++) {
+            ble_profile_hid_mouse_move(app->ble_hid_profile, 0, CC_ACCEL_Y_STEP);
+            s_cur_y += CC_ACCEL_Y_STEP;
+            furi_delay_ms(CC_ACCEL_Y_DELAY);
+        }
+        furi_delay_ms(150);
     }
-    furi_delay_ms(150);
 
-    // Test line + symmetric return (cursor ends at test-line-start X, test-line Y)
+    // Test line at current Y
     draw_and_return(app, cal_step[cal_point], cal_delay[cal_point], m_test);
 
-    // Leave cursor below test line so next iteration draws a fresh pair underneath
-    for(int16_t i = 0; i < CC_ACCEL_Y_SPACING; i++) {
-        ble_profile_hid_mouse_move(app->ble_hid_profile, 0, 1);
-        s_cur_y++;
-        furi_delay_ms(8);
+    // Move down for next iteration
+    for(int16_t i = 0; i < steps_down; i++) {
+        ble_profile_hid_mouse_move(app->ble_hid_profile, 0, CC_ACCEL_Y_STEP);
+        s_cur_y += CC_ACCEL_Y_STEP;
+        furi_delay_ms(CC_ACCEL_Y_DELAY);
     }
 }
