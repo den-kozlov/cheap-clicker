@@ -105,9 +105,9 @@ CheapClickerApp* cheap_clicker_alloc(void) {
         cc_monument_view_get_view(app->monument_view));
 
     app->monument = cc_monument_alloc();
-    app->speed_tune = cc_speed_tune_state_alloc();
-    app->move_step = 20;
-    app->move_delay_ms = 5;
+    app->accel_tune = cc_accel_tune_state_alloc();
+    app->accel[0] = 1.0f;
+    app->accel[1] = 1.0f;
 
     app->script_path = furi_string_alloc();
     app->profile_count = 0;
@@ -156,9 +156,9 @@ void cheap_clicker_free(CheapClickerApp* app) {
     view_dispatcher_remove_view(app->view_dispatcher, CheapClickerViewMonument);
     cc_monument_view_free(app->monument_view);
 
-    if(app->speed_tune) {
-        cc_speed_tune_state_free(app->speed_tune);
-        app->speed_tune = NULL;
+    if(app->accel_tune) {
+        cc_accel_tune_state_free(app->accel_tune);
+        app->accel_tune = NULL;
     }
 
     scene_manager_free(app->scene_manager);

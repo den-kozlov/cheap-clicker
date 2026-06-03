@@ -104,10 +104,9 @@ typedef struct {
     CcStartView* start_view;
     CcManualView* manual_view;
     CcMonumentView* monument_view;
-    CcMonument*     monument;
-    CcSpeedTuneState* speed_tune;
-    uint8_t move_step;       // pixels per BLE HID report; default 20
-    uint8_t move_delay_ms;   // ms between reports in cc_ble_move_to; default 5
+    CcMonument*      monument;
+    CcAccelTuneState* accel_tune;
+    float accel[CC_ACCEL_CAL_POINTS];  // accel multiplier per cal speed point; default 1.0
 
     CcButtonDef buttons[CC_MAX_BUTTONS];  // global button definitions
     uint8_t button_count;
