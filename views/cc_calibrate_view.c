@@ -22,6 +22,8 @@ struct CcCalibrateView {
     void* skip_ctx;
     CcCalibrateViewTestCallback test_cb;
     void* test_ctx;
+    CcCalibrateViewAbortCallback abort_cb;
+    void* abort_ctx;
 };
 
 static void cc_calibrate_draw_callback(Canvas* canvas, void* context) {
@@ -48,6 +50,13 @@ static bool cc_calibrate_input_callback(InputEvent* event, void* context) {
     if(event->key == InputKeyBack && event->type == InputTypeShort) {
         if(v->skip_cb) {
             v->skip_cb(v->skip_ctx);
+        }
+        return true;
+    }
+
+    if(event->key == InputKeyBack && event->type == InputTypeLong) {
+        if(v->abort_cb) {
+            v->abort_cb(v->abort_ctx);
         }
         return true;
     }
@@ -143,6 +152,8 @@ CcCalibrateView* cc_calibrate_view_alloc(void) {
     v->skip_ctx = NULL;
     v->test_cb = NULL;
     v->test_ctx = NULL;
+    v->abort_cb = NULL;
+    v->abort_ctx = NULL;
     return v;
 }
 
@@ -209,6 +220,15 @@ void cc_calibrate_view_set_test_callback(
     furi_assert(v);
     v->test_cb = cb;
     v->test_ctx = context;
+}
+
+void cc_calibrate_view_set_abort_callback(
+    CcCalibrateView* v,
+    CcCalibrateViewAbortCallback cb,
+    void* context) {
+    furi_assert(v);
+    v->abort_cb = cb;
+    v->abort_ctx = context;
 }
 
 void cc_calibrate_view_set_coords(CcCalibrateView* v, int16_t x, int16_t y) {
