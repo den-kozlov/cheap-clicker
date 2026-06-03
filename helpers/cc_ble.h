@@ -2,13 +2,13 @@
 #include "../cheap_clicker_i.h"
 
 // Calibration speed points and reference line parameters
-#define CC_ACCEL_CAL_STEP_0  5    // step size for slow cal point
-#define CC_ACCEL_CAL_DELAY_0 10   // delay (ms) for slow cal point
+#define CC_ACCEL_CAL_STEP_0  10   // step size for medium cal point
+#define CC_ACCEL_CAL_DELAY_0 10   // delay (ms) for medium cal point
 #define CC_ACCEL_CAL_STEP_1  20   // step size for fast cal point
 #define CC_ACCEL_CAL_DELAY_1 10   // delay (ms) for fast cal point
-#define CC_ACCEL_N_REF       60   // reference line step count
-#define CC_ACCEL_REF_STEP    3    // ref line step size (slow enough: a≈1)
-#define CC_ACCEL_REF_DELAY   40   // ms per reference step (slow, minimal accel)
+#define CC_ACCEL_N_REF       40   // reference line step count
+#define CC_ACCEL_REF_STEP    5    // ref line step size (step=5 confirmed visible)
+#define CC_ACCEL_REF_DELAY   15   // ms per reference step (slow enough: a≈1)
 #define CC_ACCEL_Y_SPACING   60   // vertical gap between ref and test lines (px)
 
 void cc_ble_start(CheapClickerApp* app);
