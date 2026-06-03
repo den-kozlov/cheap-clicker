@@ -151,15 +151,15 @@ void cc_ble_draw_tune_lines(
     const uint8_t POS_STEP = 5;
     const uint8_t POS_DELAY = 30;
     const uint8_t N_STEPS = 20;
-    const int16_t X_START = 420;
-    const int16_t Y_START = 50;
     const int16_t Y_SPACING = 40;
+    const int16_t x_start = s_cur_x;
+    const int16_t y_start = s_cur_y;
 
     for(uint8_t i = 0; i < 5; i++) {
-        int16_t y = Y_START + i * Y_SPACING;
+        int16_t y = y_start + i * Y_SPACING;
         uint8_t line_delay = (i == 0) ? ref_delay_ms : test_delays_ms[i - 1];
 
-        cc_ble_move_to_raw(app, X_START, y, POS_STEP, POS_DELAY);
+        cc_ble_move_to_raw(app, x_start, y, POS_STEP, POS_DELAY);
         furi_delay_ms(50);
 
         ble_profile_hid_mouse_press(app->ble_hid_profile, HID_MOUSE_BTN_LEFT);
