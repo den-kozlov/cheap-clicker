@@ -6,6 +6,9 @@
 #include <ble_profile/extra_profiles/hid_profile.h>
 #include <gui/view_dispatcher.h>
 
+// helper macro to constrain a value between min and max (inclusive)
+#define CONSTRAIN(val, min, max) ((val) > (max) ? (max) : ((val) < (min) ? (min) : (val)))
+
 // Module-level singleton state
 static int16_t s_cur_x = 0;
 static int16_t s_cur_y = 0;
@@ -83,13 +86,24 @@ void cc_ble_reset_cursor(CheapClickerApp* app) {
     furi_assert(app);
 
     if(!app->ble_hid_profile) return;
-
-    for(int i = 0; i < 32; i++) {
-        ble_profile_hid_mouse_move(app->ble_hid_profile, -127, -127);
+    float step = 127.0f;
+    for(int i = 0; i < 200; i++) {
+        ble_profile_hid_mouse_move(app->ble_hid_profile, -(int16_t)step, 0);
+        furi_delay_ms(2);
+        step /= 1.05f;
+    }
+    step = 127.0f;
+    for(int i = 0; i < 40; i++) {
+        ble_profile_hid_mouse_move(app->ble_hid_profile, 10, 0);
         furi_delay_ms(2);
     }
+    for(int i = 0; i < 100; i++) {
+        ble_profile_hid_mouse_move(app->ble_hid_profile, 0, -(int16_t)step);
+        furi_delay_ms(2 );
+        step /= 1.1f;
+    }
 
-    s_cur_x = 0;
+    s_cur_x = 400;
     s_cur_y = 0;
 }
 
@@ -97,20 +111,26 @@ void cc_ble_move_to(CheapClickerApp* app, int16_t x, int16_t y) {
     furi_assert(app);
 
     if(!app->ble_hid_profile) return;
+    if(x < 0) x = 0;
+    if(y < 0) y = 0;
+    // snap target to 20px grid
+    x = (x / 20) * 20;
+    y = (y / 20) * 20;
 
     int16_t dx = x - s_cur_x;
     int16_t dy = y - s_cur_y;
 
     while(dx != 0 || dy != 0) {
-        int8_t step_x = dx > 127 ? 127 : dx < -127 ? -127 : (int8_t)dx;
-        int8_t step_y = dy > 127 ? 127 : dy < -127 ? -127 : (int8_t)dy;
+        int8_t step_x = dx > 0 ? 20 : (dx < 0 ? -20 : 0);
+        int8_t step_y = dy > 0 ? 20 : (dy < 0 ? -20 : 0);
         ble_profile_hid_mouse_move(app->ble_hid_profile, step_x, step_y);
         s_cur_x += step_x;
         s_cur_y += step_y;
         dx = x - s_cur_x;
         dy = y - s_cur_y;
-        furi_delay_ms(2);
+        furi_delay_ms(4);
     }
+    furi_delay_ms(10);
 }
 
 void cc_ble_press_button(
@@ -123,9 +143,8 @@ void cc_ble_press_button(
     furi_assert(app);
 
     if(!app->ble_hid_profile) return;
-    FuriHalBleProfileBase* profile = app->ble_hid_profile;  // snapshot
+    FuriHalBleProfileBase* profile = app->ble_hid_profile; // snapshot
 
-    cc_ble_reset_cursor(app);
     cc_ble_move_to(app, trigger_x, trigger_y);
     ble_profile_hid_mouse_press(profile, HID_MOUSE_BTN_LEFT);
     furi_delay_ms(panel_delay_ms);
@@ -133,6 +152,37 @@ void cc_ble_press_button(
     furi_delay_ms(80);
     ble_profile_hid_mouse_release(profile, HID_MOUSE_BTN_LEFT);
     furi_delay_ms(50);
+}
+
+void cc_ble_click_at(CheapClickerApp* app, int16_t x, int16_t y) {
+    furi_assert(app);
+
+    if(!app->ble_hid_profile) return;
+    FuriHalBleProfileBase* profile = app->ble_hid_profile;
+
+    cc_ble_move_to(app, x, y);
+    furi_delay_ms(5);
+    ble_profile_hid_mouse_press(profile, HID_MOUSE_BTN_LEFT);
+    furi_delay_ms(5);
+    ble_profile_hid_mouse_release(profile, HID_MOUSE_BTN_LEFT);
+    furi_delay_ms(5);
+}
+
+void cc_ble_move_by(CheapClickerApp* app, int8_t dx, int8_t dy) {
+    furi_assert(app);
+    if(!app->ble_hid_profile) return;
+    ble_profile_hid_mouse_move(app->ble_hid_profile, dx, dy);
+    furi_delay_ms(20);
+    s_cur_x += dx;
+    s_cur_y += dy;
+    if(s_cur_x < 0) s_cur_x = 0;
+    if(s_cur_y < 0) s_cur_y = 0;
+}
+
+void cc_ble_get_pos(CheapClickerApp* app, int16_t* x, int16_t* y) {
+    UNUSED(app);
+    *x = s_cur_x;
+    *y = s_cur_y;
 }
 
 bool cc_ble_is_connected(CheapClickerApp* app) {

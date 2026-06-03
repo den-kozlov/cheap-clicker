@@ -19,7 +19,7 @@
 #define DPAD_STEP 13  // distance from center to each direction button center
 
 typedef struct {
-    char labels[5][9]; // Up=0 Down=1 Left=2 Right=3 Ok=4; 8 chars + null; "-" if NONE
+    char labels[5][9]; // Up=0 Down=1 Right=2 Left=3 Ok=4; 8 chars + null; "-" if NONE
     bool ble_connected;
 } CcManualViewModel;
 
@@ -51,7 +51,7 @@ static void cc_manual_view_draw(Canvas* canvas, void* _m) {
     canvas_draw_line(canvas, 63, 0, 63, 63);
 
     // Right panel: key→button name list
-    static const char* const key_letters[5] = {"U", "D", "L", "R", "O"};
+    static const char* const key_letters[5] = {"U", "D", "R", "L", "O"};
     for(uint8_t i = 0; i < 5; i++) {
         char buf[12];
         snprintf(buf, sizeof(buf), "%s:%s", key_letters[i], m->labels[i]);

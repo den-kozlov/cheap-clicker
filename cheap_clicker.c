@@ -173,6 +173,7 @@ int32_t cheap_clicker_app(void* p) {
     cc_manual_layout_load(app);
     cc_profile_load_all(app);
     cc_profile_load_active(app);
+    cc_monument_settings_load(app);
     if(app->profile_count == 0) {
         app->active_profile_idx = CC_PROFILE_IDX_NONE;
     } else if(app->active_profile_idx >= app->profile_count) {

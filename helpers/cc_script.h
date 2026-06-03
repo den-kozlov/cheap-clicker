@@ -3,6 +3,7 @@
 
 typedef enum {
     CcScriptStateIdle,
+    CcScriptStateCompiling,
     CcScriptStateRunning,
     CcScriptStatePaused,
     CcScriptStateDone,
@@ -16,11 +17,30 @@ typedef struct {
     char error_msg[64];
 } CcScriptStatus;
 
+typedef enum {
+    CcInstrPress,
+    CcInstrDelay,
+    CcInstrLoopStart,
+    CcInstrLoopEnd,
+} CcInstrType;
+
+typedef struct {
+    CcInstrType type;
+    union {
+        uint8_t  button_idx;  // Press: resolved index into app->buttons[]
+        uint32_t delay_ms;    // Delay
+        uint32_t loop_count;  // LoopStart: 0 = infinite
+        // LoopEnd: no payload (runtime stack holds body_pc)
+    };
+} CcInstr;
+
+#define CC_SCRIPT_MAX_INSTRS 512
+
 typedef struct CcScript CcScript;
 
 CcScript* cc_script_alloc(CheapClickerApp* app);
 void cc_script_free(CcScript* script);
-bool cc_script_open(CcScript* script, const char* path);
+void cc_script_open(CcScript* script, const char* path);
 void cc_script_run(CcScript* script);
 void cc_script_stop(CcScript* script);
 void cc_script_pause(CcScript* script);

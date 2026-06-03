@@ -7,6 +7,9 @@ typedef struct CcCalibrateView CcCalibrateView;
 
 typedef void (*CcCalibrateViewConfirmCallback)(void* context, int16_t x, int16_t y);
 typedef void (*CcCalibrateViewMoveCallback)(void* context, int8_t dx, int8_t dy);
+typedef void (*CcCalibrateViewGetPosCallback)(void* context, int16_t* x, int16_t* y);
+typedef void (*CcCalibrateViewSkipCallback)(void* context);
+typedef void (*CcCalibrateViewTestCallback)(void* context, int16_t x, int16_t y);
 
 CcCalibrateView* cc_calibrate_view_alloc(void);
 void cc_calibrate_view_free(CcCalibrateView* v);
@@ -19,6 +22,18 @@ void cc_calibrate_view_set_confirm_callback(
 void cc_calibrate_view_set_move_callback(
     CcCalibrateView* v,
     CcCalibrateViewMoveCallback cb,
+    void* context);
+void cc_calibrate_view_set_get_pos_callback(
+    CcCalibrateView* v,
+    CcCalibrateViewGetPosCallback cb,
+    void* context);
+void cc_calibrate_view_set_skip_callback(
+    CcCalibrateView* v,
+    CcCalibrateViewSkipCallback cb,
+    void* context);
+void cc_calibrate_view_set_test_callback(
+    CcCalibrateView* v,
+    CcCalibrateViewTestCallback cb,
     void* context);
 
 // Set the label shown for the current calibration point (e.g. "TRIGGER" or "[3/17] attack")

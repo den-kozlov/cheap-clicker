@@ -8,6 +8,10 @@
 #define CC_SCRIPTS_DIR     APP_DATA_PATH("scripts")
 #define CC_CONFIG_PATH     APP_DATA_PATH("config.fds")
 #define CC_BUTTONS_PATH    APP_DATA_PATH("buttons.fds")
+#define CC_MONUMENT_PATH   APP_DATA_PATH("monument.fds")
+
+#define CC_MONUMENT_FILE_TYPE "CheapClicker Monument"
+#define CC_MONUMENT_VERSION   1
 
 #define CC_PROFILE_FILE_TYPE    "CheapClicker Profile"
 #define CC_PROFILE_VERSION      1
@@ -394,10 +398,6 @@ void cc_profile_save_active(CheapClickerApp* app) {
                 break;
             uint32_t active = app->active_profile_idx;
             if(!flipper_format_write_uint32(fff, "ActiveProfile", &active, 1)) break;
-            uint32_t mauto = app->monument_auto_btn;
-            if(!flipper_format_write_uint32(fff, "MonumentAutoBtn", &mauto, 1)) break;
-            uint32_t mheal = app->monument_heal_btn;
-            if(!flipper_format_write_uint32(fff, "MonumentHealBtn", &mheal, 1)) break;
         } while(0);
         flipper_format_file_close(fff);
     }
@@ -422,14 +422,6 @@ void cc_profile_load_active(CheapClickerApp* app) {
         uint32_t active = 0;
         if(!flipper_format_read_uint32(fff, "ActiveProfile", &active, 1)) break;
         app->active_profile_idx = (uint8_t)active;
-
-        uint32_t mauto = CC_BUTTON_IDX_NONE;
-        if(flipper_format_read_uint32(fff, "MonumentAutoBtn", &mauto, 1))
-            app->monument_auto_btn = (uint8_t)mauto;
-
-        uint32_t mheal = CC_BUTTON_IDX_NONE;
-        if(flipper_format_read_uint32(fff, "MonumentHealBtn", &mheal, 1))
-            app->monument_heal_btn = (uint8_t)mheal;
     } while(0);
 
     flipper_format_file_close(fff);
@@ -459,4 +451,58 @@ void cc_button_delete(CheapClickerApp* app, uint8_t btn_idx) {
         memset(&prof->calib[app->button_count], 0, sizeof(CcButtonCalib));
         cc_calib_save(app, p);
     }
+}
+
+// ---------------------------------------------------------------------------
+// Monument Attack global settings (monument.fds)
+// ---------------------------------------------------------------------------
+
+void cc_monument_settings_save(CheapClickerApp* app) {
+    furi_assert(app);
+
+    Storage* storage = furi_record_open(RECORD_STORAGE);
+    FlipperFormat* fff = flipper_format_file_alloc(storage);
+
+    if(flipper_format_file_open_always(fff, CC_MONUMENT_PATH)) {
+        do {
+            if(!flipper_format_write_header_cstr(fff, CC_MONUMENT_FILE_TYPE, CC_MONUMENT_VERSION))
+                break;
+            uint32_t mauto = app->monument_auto_btn;
+            if(!flipper_format_write_uint32(fff, "AutoBtn", &mauto, 1)) break;
+            uint32_t mheal = app->monument_heal_btn;
+            if(!flipper_format_write_uint32(fff, "HealBtn", &mheal, 1)) break;
+        } while(0);
+        flipper_format_file_close(fff);
+    }
+
+    flipper_format_free(fff);
+    furi_record_close(RECORD_STORAGE);
+}
+
+void cc_monument_settings_load(CheapClickerApp* app) {
+    furi_assert(app);
+
+    Storage* storage = furi_record_open(RECORD_STORAGE);
+    FlipperFormat* fff = flipper_format_file_alloc(storage);
+    FuriString* temp = furi_string_alloc();
+
+    do {
+        if(!flipper_format_file_open_existing(fff, CC_MONUMENT_PATH)) break;
+
+        uint32_t version = 0;
+        if(!flipper_format_read_header(fff, temp, &version)) break;
+
+        uint32_t mauto = CC_BUTTON_IDX_NONE;
+        if(flipper_format_read_uint32(fff, "AutoBtn", &mauto, 1))
+            app->monument_auto_btn = (uint8_t)mauto;
+
+        uint32_t mheal = CC_BUTTON_IDX_NONE;
+        if(flipper_format_read_uint32(fff, "HealBtn", &mheal, 1))
+            app->monument_heal_btn = (uint8_t)mheal;
+    } while(0);
+
+    flipper_format_file_close(fff);
+    flipper_format_free(fff);
+    furi_string_free(temp);
+    furi_record_close(RECORD_STORAGE);
 }

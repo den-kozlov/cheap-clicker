@@ -6,6 +6,7 @@
 typedef struct CcRunView CcRunView;
 
 typedef enum {
+    CcRunViewEventStart,
     CcRunViewEventStop,
     CcRunViewEventPause,
     CcRunViewEventResume,

@@ -2,7 +2,7 @@
 #include "../views/cc_monument_view.h"
 #include "../helpers/cc_monument.h"
 #include "../helpers/cc_ble.h"
-#include "../helpers/cc_profile.h"
+#include "../helpers/cc_profile.h"  // cc_monument_settings_save
 #include <string.h>
 
 static uint8_t s_selecting_for; // 0=auto button, 1=heal button
@@ -66,7 +66,7 @@ bool cc_scene_monument_on_event(void* context, SceneManagerEvent event) {
             app->monument_heal_btn = idx;
             cc_monument_view_set_heal_btn(app->monument_view, idx);
         }
-        cc_profile_save_active(app);
+        cc_monument_settings_save(app);
         view_dispatcher_switch_to_view(app->view_dispatcher, CheapClickerViewMonument);
         return true;
     }

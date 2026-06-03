@@ -8,6 +8,8 @@ void cc_scene_scripts_on_enter(void* context) {
     dialog_file_browser_set_basic_options(&opts, ".txt", NULL);
     opts.base_path = APP_DATA_PATH("scripts");
     opts.hide_ext = false;
+    if(furi_string_empty(app->script_path))
+        furi_string_set(app->script_path, APP_DATA_PATH("scripts"));
     bool selected = dialog_file_browser_show(
         dialogs, app->script_path, app->script_path, &opts);
     furi_record_close(RECORD_DIALOGS);

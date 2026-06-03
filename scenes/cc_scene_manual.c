@@ -41,6 +41,7 @@ static void cc_manual_refresh(CheapClickerApp* app) {
 void cc_scene_manual_on_enter(void* context) {
     CheapClickerApp* app = context;
     app->manual_pending_key = CC_BUTTON_IDX_NONE;
+    cc_ble_reset_cursor(app);
     cc_manual_view_set_callback(app->manual_view, cc_manual_view_cb, app);
     cc_manual_refresh(app);
     view_dispatcher_switch_to_view(app->view_dispatcher, CheapClickerViewManual);
@@ -73,11 +74,15 @@ bool cc_scene_manual_on_event(void* context, SceneManagerEvent event) {
            btn_idx < app->button_count &&
            app->active_profile_idx != CC_PROFILE_IDX_NONE) {
             CcProfile* p = &app->profiles[app->active_profile_idx];
-            cc_ble_press_button(
-                app,
-                p->trigger_x, p->trigger_y,
-                p->calib[btn_idx].x, p->calib[btn_idx].y,
-                300);
+            if(app->buttons[btn_idx].type == CcButtonTypePress) {
+                cc_ble_click_at(app, p->calib[btn_idx].x, p->calib[btn_idx].y);
+            } else {
+                cc_ble_press_button(
+                    app,
+                    p->trigger_x, p->trigger_y,
+                    p->calib[btn_idx].x, p->calib[btn_idx].y,
+                    300);
+            }
         }
         return true;
     }

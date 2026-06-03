@@ -22,6 +22,8 @@ struct CcRunView {
 
 static const char* cc_run_view_state_str(CcScriptState state) {
     switch(state) {
+    case CcScriptStateCompiling:
+        return "Compiling";
     case CcScriptStateRunning:
         return "Running";
     case CcScriptStatePaused:
@@ -59,14 +61,20 @@ static void cc_run_view_draw_callback(Canvas* canvas, void* _model) {
     canvas_draw_str_aligned(canvas, 0, 36, AlignLeft, AlignBottom, row3);
 
     // Bottom buttons
-    if(m->state == CcScriptStateRunning) {
+    if(m->state == CcScriptStateCompiling) {
+        canvas_set_font(canvas, FontSecondary);
+        canvas_draw_str_aligned(canvas, 64, 38, AlignCenter, AlignBottom, "Compiling...");
+        elements_button_center(canvas, "Back");
+    } else if(m->state == CcScriptStateIdle) {
+        elements_button_center(canvas, "Start");
+    } else if(m->state == CcScriptStateRunning) {
         elements_button_left(canvas, "Stop");
         elements_button_right(canvas, "Pause");
     } else if(m->state == CcScriptStatePaused) {
         elements_button_left(canvas, "Stop");
         elements_button_right(canvas, "Resume");
     } else {
-        // Done / Error / Idle
+        // Done / Error
         elements_button_center(canvas, "Back");
     }
 }
@@ -84,7 +92,17 @@ static bool cc_run_view_input_callback(InputEvent* event, void* context) {
     with_view_model(
         v->view, CcRunViewModel * m, { state = m->state; }, false);
 
-    if(state == CcScriptStateRunning) {
+    if(state == CcScriptStateIdle) {
+        if(event->key == InputKeyOk) {
+            if(v->cb) v->cb(v->cb_ctx, CcRunViewEventStart);
+            return true;
+        }
+    } else if(state == CcScriptStateCompiling) {
+        if(event->key == InputKeyOk) {
+            if(v->cb) v->cb(v->cb_ctx, CcRunViewEventStop);
+            return true;
+        }
+    } else if(state == CcScriptStateRunning) {
         if(event->key == InputKeyLeft) {
             if(v->cb) v->cb(v->cb_ctx, CcRunViewEventStop);
             return true;
@@ -101,7 +119,6 @@ static bool cc_run_view_input_callback(InputEvent* event, void* context) {
             return true;
         }
     } else if(state == CcScriptStateDone || state == CcScriptStateError) {
-        // Let scene's back handler take over
         return false;
     }
 

@@ -12,7 +12,7 @@ void cc_scene_profiles_on_enter(void* context) {
     for(uint8_t i = 0; i < app->profile_count; i++)
         submenu_add_item(app->submenu, app->profiles[i].name, i, cc_profiles_cb, app);
     if(app->profile_count < CC_MAX_PROFILES)
-        submenu_add_item(app->submenu, "Connect New", CC_MAX_PROFILES, cc_profiles_cb, app);
+        submenu_add_item(app->submenu, "<Connect New>", CC_MAX_PROFILES, cc_profiles_cb, app);
     submenu_set_selected_item(
         app->submenu,
         scene_manager_get_scene_state(app->scene_manager, CheapClickerSceneProfiles));
@@ -25,7 +25,7 @@ bool cc_scene_profiles_on_event(void* context, SceneManagerEvent event) {
     scene_manager_set_scene_state(app->scene_manager, CheapClickerSceneProfiles, event.event);
     if(event.event == CC_MAX_PROFILES) {
         // save=false: keep in memory only until BLE pairs (see cc_scene_pairing)
-        uint8_t idx = cc_profile_add(app, "iPhone", "CheapClip", false);
+        uint8_t idx = cc_profile_add(app, "iPhone", "CheapClip", true);
         if(idx != CC_PROFILE_IDX_NONE) {
             app->active_profile_idx = idx;
             app->new_profile_pending = true;

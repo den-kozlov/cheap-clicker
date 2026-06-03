@@ -12,7 +12,9 @@ static const char* cc_basename(const char* path) {
 
 static void cc_run_btn_cb(void* context, CcRunViewEvent event) {
     CheapClickerApp* app = context;
-    if(event == CcRunViewEventStop) {
+    if(event == CcRunViewEventStart) {
+        cc_script_run(app->script);
+    } else if(event == CcRunViewEventStop) {
         cc_script_stop(app->script);
         scene_manager_previous_scene(app->scene_manager);
     } else if(event == CcRunViewEventPause) {
@@ -31,19 +33,18 @@ void cc_scene_run_on_enter(void* context) {
         return;
     }
     if(!app->ble_hid_profile) cc_ble_start(app);
+    cc_ble_reset_cursor(app);
 
     const char* path = furi_string_get_cstr(app->script_path);
-    if(!cc_script_open(app->script, path)) {
-        scene_manager_previous_scene(app->scene_manager);
-        return;
-    }
+
+    // Show the run view immediately in Compiling state while the worker compiles
+    cc_script_open(app->script, path);
 
     CcScriptStatus status;
     cc_script_get_status(app->script, &status);
     cc_run_view_update(app->run_view, &status, cc_basename(path));
 
     view_dispatcher_switch_to_view(app->view_dispatcher, CheapClickerViewRun);
-    cc_script_run(app->script);
 }
 
 bool cc_scene_run_on_event(void* context, SceneManagerEvent event) {
@@ -54,8 +55,10 @@ bool cc_scene_run_on_event(void* context, SceneManagerEvent event) {
        event.event == CheapClickerCustomEventScriptError) {
         CcScriptStatus status;
         cc_script_get_status(app->script, &status);
-        cc_run_view_update(app->run_view, &status,
-                           cc_basename(furi_string_get_cstr(app->script_path)));
+        cc_run_view_update(
+            app->run_view,
+            &status,
+            cc_basename(furi_string_get_cstr(app->script_path)));
         return true;
     }
     return false;

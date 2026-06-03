@@ -1,0 +1,12 @@
+LOOP 0
+PRESS build_all
+DELAY 600
+LOOP 10
+PRESS upgrade_all
+DELAY 600
+END
+PRESS capture_all
+DELAY 600
+PRESS fly_and_upgrade
+DELAY 600
+END
