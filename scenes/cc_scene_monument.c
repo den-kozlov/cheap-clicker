@@ -4,6 +4,15 @@
 #include "../helpers/cc_ble.h"
 #include <string.h>
 
+static uint8_t s_selecting_for; // 0=auto button, 1=heal button
+
+static void cc_monument_submenu_cb(void* ctx, uint32_t index) {
+    CheapClickerApp* app = ctx;
+    view_dispatcher_send_custom_event(
+        app->view_dispatcher,
+        CheapClickerCustomEventMonumentButtonSelected | ((uint32_t)index << 8));
+}
+
 static void cc_monument_view_cb(void* ctx, CcMonumentViewEvent event) {
     view_dispatcher_send_custom_event(
         ((CheapClickerApp*)ctx)->view_dispatcher, (uint32_t)event);
@@ -42,6 +51,18 @@ bool cc_scene_monument_on_event(void* context, SceneManagerEvent event) {
 
     if(event.type != SceneManagerEventTypeCustom) return false;
 
+    // CheapClickerCustomEventMonumentButtonSelected encodes index in bits [15:8]
+    if((event.event & 0xFF) == CheapClickerCustomEventMonumentButtonSelected) {
+        uint8_t idx = (uint8_t)((event.event >> 8) & 0xFF);
+        if(s_selecting_for == 0) {
+            cc_monument_view_set_auto_btn(app->monument_view, idx);
+        } else {
+            cc_monument_view_set_heal_btn(app->monument_view, idx);
+        }
+        view_dispatcher_switch_to_view(app->view_dispatcher, CheapClickerViewMonument);
+        return true;
+    }
+
     switch(event.event) {
     case CcMonumentViewEventStart: {
         uint8_t btn = cc_monument_view_get_selected_btn(app->monument_view);
@@ -55,6 +76,34 @@ bool cc_scene_monument_on_event(void* context, SceneManagerEvent event) {
         cc_monument_stop(app->monument);
         cc_monument_view_set_running(app->monument_view, false);
         return true;
+
+    case CcMonumentViewEventSelectAuto:
+        s_selecting_for = 0;
+        submenu_reset(app->submenu);
+        submenu_set_header(app->submenu, "Auto Button");
+        for(uint8_t i = 0; i < app->button_count; i++) {
+            submenu_add_item(app->submenu, app->buttons[i].name, i, cc_monument_submenu_cb, app);
+        }
+        view_dispatcher_switch_to_view(app->view_dispatcher, CheapClickerViewSubmenu);
+        return true;
+
+    case CcMonumentViewEventSelectHeal:
+        s_selecting_for = 1;
+        submenu_reset(app->submenu);
+        submenu_set_header(app->submenu, "Heal Button");
+        for(uint8_t i = 0; i < app->button_count; i++) {
+            submenu_add_item(app->submenu, app->buttons[i].name, i, cc_monument_submenu_cb, app);
+        }
+        view_dispatcher_switch_to_view(app->view_dispatcher, CheapClickerViewSubmenu);
+        return true;
+
+    case CcMonumentViewEventHealOnce: {
+        uint8_t h = cc_monument_view_get_heal_btn(app->monument_view);
+        if(h != CC_BUTTON_IDX_NONE && cc_monument_is_running(app->monument)) {
+            cc_monument_request_heal(app->monument, h);
+        }
+        return true;
+    }
 
     case CheapClickerCustomEventBleConnected:
         cc_monument_refresh(app);

@@ -61,6 +61,7 @@ typedef enum {
     CheapClickerCustomEventProfileSelected,
     CheapClickerCustomEventScriptSelected,
     CheapClickerCustomEventPopupDismissed,
+    CheapClickerCustomEventMonumentButtonSelected,
 } CheapClickerCustomEvent;
 
 typedef enum {

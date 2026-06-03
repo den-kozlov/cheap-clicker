@@ -9,6 +9,7 @@ struct CcMonument {
     CheapClickerApp* app;
     uint8_t          button_idx;
     volatile bool    running;
+    volatile uint8_t heal_request;
 };
 
 static int32_t cc_monument_worker(void* context) {
@@ -25,6 +26,16 @@ static int32_t cc_monument_worker(void* context) {
                 app, p->trigger_x, p->trigger_y,
                 p->calib[idx].x, p->calib[idx].y, 300);
         }
+        uint8_t h = ac->heal_request;
+        if(h != CC_BUTTON_IDX_NONE) {
+            ac->heal_request = CC_BUTTON_IDX_NONE;
+            if(app->buttons[h].type == CcButtonTypePress) {
+                cc_ble_click_at(app, p->calib[h].x, p->calib[h].y);
+            } else {
+                cc_ble_press_button(app, p->trigger_x, p->trigger_y,
+                                    p->calib[h].x, p->calib[h].y, 300);
+            }
+        }
     }
     return 0;
 }
@@ -33,6 +44,7 @@ CcMonument* cc_monument_alloc(void) {
     CcMonument* ac = malloc(sizeof(CcMonument));
     furi_check(ac);
     memset(ac, 0, sizeof(CcMonument));
+    ac->heal_request = CC_BUTTON_IDX_NONE;
     return ac;
 }
 
@@ -66,4 +78,9 @@ void cc_monument_stop(CcMonument* ac) {
 bool cc_monument_is_running(CcMonument* ac) {
     furi_assert(ac);
     return ac->running;
+}
+
+void cc_monument_request_heal(CcMonument* ac, uint8_t heal_btn_idx) {
+    furi_assert(ac);
+    ac->heal_request = heal_btn_idx;
 }
