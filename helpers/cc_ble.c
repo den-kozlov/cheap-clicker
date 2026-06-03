@@ -264,14 +264,13 @@ void cc_ble_draw_accel_lines(CheapClickerApp* app, uint8_t cal_point, uint8_t m_
     }
     furi_delay_ms(150);
 
-    // Test line + symmetric return (cursor ends at test-line-start X)
+    // Test line + symmetric return (cursor ends at test-line-start X, test-line Y)
     draw_and_return(app, cal_step[cal_point], cal_delay[cal_point], m_test);
-    furi_delay_ms(200);
 
-    // Move UP back to reference Y so next iteration starts at same position
+    // Leave cursor below test line so next iteration draws a fresh pair underneath
     for(int16_t i = 0; i < CC_ACCEL_Y_SPACING; i++) {
-        ble_profile_hid_mouse_move(app->ble_hid_profile, 0, -1);
-        s_cur_y--;
+        ble_profile_hid_mouse_move(app->ble_hid_profile, 0, 1);
+        s_cur_y++;
         furi_delay_ms(8);
     }
 }
