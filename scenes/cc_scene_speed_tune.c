@@ -35,7 +35,7 @@ void cc_accel_tune_state_reset(CcAccelTuneState* s) {
     furi_assert(s);
     s->cal_point  = 0;
     s->m_low      = 1;
-    s->m_high     = CC_ACCEL_N_REF / CAL_STEP[0];
+    s->m_high     = (CC_ACCEL_N_REF * CC_ACCEL_REF_STEP) / CAL_STEP[0];
     s->m_cur      = (s->m_low + s->m_high) / 2;
     s->result[0]  = 1.0f;
     s->result[1]  = 1.0f;
@@ -83,8 +83,9 @@ static void accel_skip_cb(void* context) {
 static void advance_cal_point(CheapClickerApp* app) {
     CcAccelTuneState* s = app->accel_tune;
 
-    // Record measured accel for current point
-    float a = (float)CC_ACCEL_N_REF / ((float)s->m_cur * (float)CAL_STEP[s->cal_point]);
+    // Record measured accel: ref_real ≈ N_REF × REF_STEP; test_real = m_cur × CAL_STEP × a
+    float a = (float)(CC_ACCEL_N_REF * CC_ACCEL_REF_STEP) /
+              ((float)s->m_cur * (float)CAL_STEP[s->cal_point]);
     s->result[s->cal_point] = a;
     s->done[s->cal_point]   = true;
 
@@ -100,7 +101,7 @@ static void advance_cal_point(CheapClickerApp* app) {
     } else {
         // Next cal point: reset binary search bounds
         s->m_low  = 1;
-        s->m_high = CC_ACCEL_N_REF / CAL_STEP[s->cal_point];
+        s->m_high = (CC_ACCEL_N_REF * CC_ACCEL_REF_STEP) / CAL_STEP[s->cal_point];
         s->m_cur  = (s->m_low + s->m_high) / 2;
         scene_manager_set_scene_state(
             app->scene_manager, CheapClickerSceneSpeedTune, AccelPhasePosition);

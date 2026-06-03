@@ -249,20 +249,29 @@ void cc_ble_draw_accel_lines(CheapClickerApp* app, uint8_t cal_point, uint8_t m_
     static const uint8_t cal_step[]  = {CC_ACCEL_CAL_STEP_0,  CC_ACCEL_CAL_STEP_1};
     static const uint8_t cal_delay[] = {CC_ACCEL_CAL_DELAY_0, CC_ACCEL_CAL_DELAY_1};
 
-    // Reference line at current position
+    // Brief pause so user can see pen starting position
+    furi_delay_ms(300);
+
+    // Reference line + symmetric return (cursor ends at original X)
     draw_and_return(app, CC_ACCEL_REF_STEP, CC_ACCEL_REF_DELAY, CC_ACCEL_N_REF);
-    furi_delay_ms(100);
+    furi_delay_ms(200);
 
-    // Move down to test line start using slow step=1 (a≈1, no error)
-    int16_t y_test = s_cur_y + CC_ACCEL_Y_SPACING;
-    while(s_cur_y != y_test) {
-        int8_t sy = s_cur_y < y_test ? 1 : -1;
-        ble_profile_hid_mouse_move(app->ble_hid_profile, 0, sy);
-        s_cur_y += sy;
-        furi_delay_ms(CC_ACCEL_REF_DELAY);
+    // Move DOWN to test line Y at step=1, fast delay (a≈1 for slow Y movement)
+    for(int16_t i = 0; i < CC_ACCEL_Y_SPACING; i++) {
+        ble_profile_hid_mouse_move(app->ble_hid_profile, 0, 1);
+        s_cur_y++;
+        furi_delay_ms(8);
     }
-    furi_delay_ms(50);
+    furi_delay_ms(150);
 
-    // Test line
+    // Test line + symmetric return (cursor ends at test-line-start X)
     draw_and_return(app, cal_step[cal_point], cal_delay[cal_point], m_test);
+    furi_delay_ms(200);
+
+    // Move UP back to reference Y so next iteration starts at same position
+    for(int16_t i = 0; i < CC_ACCEL_Y_SPACING; i++) {
+        ble_profile_hid_mouse_move(app->ble_hid_profile, 0, -1);
+        s_cur_y--;
+        furi_delay_ms(8);
+    }
 }

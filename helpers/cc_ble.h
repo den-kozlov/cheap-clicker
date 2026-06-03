@@ -6,9 +6,9 @@
 #define CC_ACCEL_CAL_DELAY_0 10   // delay (ms) for slow cal point
 #define CC_ACCEL_CAL_STEP_1  20   // step size for fast cal point
 #define CC_ACCEL_CAL_DELAY_1 10   // delay (ms) for fast cal point
-#define CC_ACCEL_N_REF       80   // reference line length in steps (step=1)
-#define CC_ACCEL_REF_STEP    1
-#define CC_ACCEL_REF_DELAY   20   // ms per reference step
+#define CC_ACCEL_N_REF       60   // reference line step count
+#define CC_ACCEL_REF_STEP    3    // ref line step size (slow enough: a≈1)
+#define CC_ACCEL_REF_DELAY   40   // ms per reference step (slow, minimal accel)
 #define CC_ACCEL_Y_SPACING   60   // vertical gap between ref and test lines (px)
 
 void cc_ble_start(CheapClickerApp* app);
