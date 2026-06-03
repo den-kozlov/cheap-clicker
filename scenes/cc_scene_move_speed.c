@@ -8,13 +8,23 @@ static const uint8_t DELAY_VALUES[] = {1, 2, 3, 5, 8, 10, 15, 20};
 #define STEP_COUNT  (sizeof(STEP_VALUES)  / sizeof(STEP_VALUES[0]))
 #define DELAY_COUNT (sizeof(DELAY_VALUES) / sizeof(DELAY_VALUES[0]))
 
-static const uint16_t SYNC_VALUES[] = {0, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000, 18000, 20000};
+static const uint32_t SYNC_VALUES[] = {0, 5000, 10000, 20000, 40000, 60000, 80000, 100000, 150000, 200000, 20000};
 #define SYNC_COUNT (sizeof(SYNC_VALUES) / sizeof(SYNC_VALUES[0]))
 
-static uint8_t find_sync_idx(uint16_t val) {
+static uint8_t find_sync_idx(uint32_t val) {
     for(uint8_t i = 0; i < SYNC_COUNT; i++)
         if(SYNC_VALUES[i] == val) return i;
     return 0;
+}
+
+static void sync_fmt(char* buf, size_t buf_size, uint32_t val) {
+    if(val == 0) {
+        snprintf(buf, buf_size, "Off");
+    } else if(val % 1000 == 0) {
+        snprintf(buf, buf_size, "%uk px", (unsigned)(val / 1000));
+    } else {
+        snprintf(buf, buf_size, "%u.%uk px", (unsigned)(val / 1000), (unsigned)((val % 1000) / 100));
+    }
 }
 
 static void sync_change_cb(VariableItem* item) {
@@ -22,12 +32,8 @@ static void sync_change_cb(VariableItem* item) {
     uint8_t idx = variable_item_get_current_value_index(item);
     app->sync_dist = SYNC_VALUES[idx];
 
-    static char buf[10];
-    if(app->sync_dist == 0) {
-        snprintf(buf, sizeof(buf), "Off");
-    } else {
-        snprintf(buf, sizeof(buf), "%upx", (unsigned)app->sync_dist);
-    }
+    static char buf[16];
+    sync_fmt(buf, sizeof(buf), app->sync_dist);
     variable_item_set_current_value_text(item, buf);
 }
 
@@ -84,16 +90,12 @@ void cc_scene_move_speed_on_enter(void* context) {
     snprintf(delay_buf, sizeof(delay_buf), "%ums", (unsigned)DELAY_VALUES[di]);
     variable_item_set_current_value_text(item, delay_buf);
 
-    static char sync_buf[10];
+    static char sync_buf[16];
 
     item = variable_item_list_add(vil, "Cursor Sync", SYNC_COUNT, sync_change_cb, app);
     uint8_t sci = find_sync_idx(app->sync_dist);
     variable_item_set_current_value_index(item, sci);
-    if(SYNC_VALUES[sci] == 0) {
-        snprintf(sync_buf, sizeof(sync_buf), "Off");
-    } else {
-        snprintf(sync_buf, sizeof(sync_buf), "%upx", (unsigned)SYNC_VALUES[sci]);
-    }
+    sync_fmt(sync_buf, sizeof(sync_buf), SYNC_VALUES[sci]);
     variable_item_set_current_value_text(item, sync_buf);
 
     view_dispatcher_switch_to_view(app->view_dispatcher, CheapClickerViewVariableList);
