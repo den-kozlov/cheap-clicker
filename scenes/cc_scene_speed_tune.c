@@ -1,6 +1,7 @@
 #include "../cheap_clicker_i.h"
 #include "../helpers/cc_ble.h"
 #include "../helpers/cc_profile.h"
+#include "../views/cc_calibrate_view.h"
 #include <gui/modules/dialog_ex.h>
 #include <gui/modules/popup.h>
 #include <gui/modules/submenu.h>
@@ -10,7 +11,7 @@
 #define SPEED_TUNE_REF_STEP  5
 
 typedef enum {
-    CcSpeedTunePhaseInstructions,
+    CcSpeedTunePhasePosition,
     CcSpeedTunePhaseDrawing,
     CcSpeedTunePhaseSelection,
     CcSpeedTunePhaseContinue,
@@ -62,41 +63,54 @@ void cc_speed_tune_state_advance(CcSpeedTuneState* s) {
 // Forward declarations
 // ---------------------------------------------------------------------------
 
-static void show_instructions(CheapClickerApp* app);
+static void show_position(CheapClickerApp* app);
 static void show_drawing(CheapClickerApp* app);
 static void show_selection(CheapClickerApp* app);
 static void show_continue(CheapClickerApp* app);
 
 // ---------------------------------------------------------------------------
-// Dialog callback
+// CalibrateView callbacks (position phase)
+// ---------------------------------------------------------------------------
+
+static void cc_speed_tune_move_cb(void* context, int8_t dx, int8_t dy) {
+    cc_ble_move_by(context, dx, dy);
+}
+
+static void cc_speed_tune_get_pos_cb(void* context, int16_t* x, int16_t* y) {
+    cc_ble_get_pos(context, x, y);
+}
+
+static void cc_speed_tune_confirm_cb(void* context, int16_t x, int16_t y) {
+    UNUSED(x);
+    UNUSED(y);
+    CheapClickerApp* app = context;
+    scene_manager_set_scene_state(
+        app->scene_manager, CheapClickerSceneSpeedTune, CcSpeedTunePhaseDrawing);
+    show_drawing(app);
+}
+
+static void cc_speed_tune_skip_cb(void* context) {
+    scene_manager_previous_scene(((CheapClickerApp*)context)->scene_manager);
+}
+
+// ---------------------------------------------------------------------------
+// Dialog callback (continue phase)
 // ---------------------------------------------------------------------------
 
 static void cc_speed_tune_dialog_cb(DialogExResult result, void* context) {
     CheapClickerApp* app = context;
     CcSpeedTuneState* s = app->speed_tune;
-    CcSpeedTunePhase phase = (CcSpeedTunePhase)scene_manager_get_scene_state(
-        app->scene_manager, CheapClickerSceneSpeedTune);
 
-    if(phase == CcSpeedTunePhaseInstructions) {
-        if(result == DialogExResultRight) {
-            scene_manager_set_scene_state(
-                app->scene_manager, CheapClickerSceneSpeedTune, CcSpeedTunePhaseDrawing);
-            show_drawing(app);
-        } else {
-            scene_manager_previous_scene(app->scene_manager);
-        }
-    } else if(phase == CcSpeedTunePhaseContinue) {
-        if(result == DialogExResultRight) {
-            cc_speed_tune_state_advance(s);
-            scene_manager_set_scene_state(
-                app->scene_manager, CheapClickerSceneSpeedTune, CcSpeedTunePhaseInstructions);
-            show_instructions(app);
-        } else {
-            app->move_step = s->test_step;
-            app->move_delay_ms = s->test_delays[s->winner_idx];
-            cc_profile_save_active(app);
-            scene_manager_previous_scene(app->scene_manager);
-        }
+    if(result == DialogExResultRight) {
+        cc_speed_tune_state_advance(s);
+        scene_manager_set_scene_state(
+            app->scene_manager, CheapClickerSceneSpeedTune, CcSpeedTunePhasePosition);
+        show_position(app);
+    } else {
+        app->move_step = s->test_step;
+        app->move_delay_ms = s->test_delays[s->winner_idx];
+        cc_profile_save_active(app);
+        scene_manager_previous_scene(app->scene_manager);
     }
 }
 
@@ -113,21 +127,17 @@ static void cc_speed_tune_submenu_cb(void* context, uint32_t index) {
 // Phase display helpers
 // ---------------------------------------------------------------------------
 
-static void show_instructions(CheapClickerApp* app) {
-    dialog_ex_reset(app->dialog_ex);
-    dialog_ex_set_header(app->dialog_ex, "Speed Tune", 64, 4, AlignCenter, AlignTop);
-    dialog_ex_set_text(
-        app->dialog_ex,
-        "Open drawing app on phone.\nPlace cursor top-left.\nPress OK to draw test lines.",
-        64,
-        32,
-        AlignCenter,
-        AlignCenter);
-    dialog_ex_set_left_button_text(app->dialog_ex, "Back");
-    dialog_ex_set_right_button_text(app->dialog_ex, "OK");
-    dialog_ex_set_result_callback(app->dialog_ex, cc_speed_tune_dialog_cb);
-    dialog_ex_set_context(app->dialog_ex, app);
-    view_dispatcher_switch_to_view(app->view_dispatcher, CheapClickerViewDialogEx);
+static void show_position(CheapClickerApp* app) {
+    int16_t x = 0, y = 0;
+    cc_ble_get_pos(app, &x, &y);
+
+    cc_calibrate_view_set_label(app->calibrate_view, "Open drawing app.\nDpad=move  OK=start draw");
+    cc_calibrate_view_set_coords(app->calibrate_view, x, y);
+    cc_calibrate_view_set_move_callback(app->calibrate_view, cc_speed_tune_move_cb, app);
+    cc_calibrate_view_set_get_pos_callback(app->calibrate_view, cc_speed_tune_get_pos_cb, app);
+    cc_calibrate_view_set_confirm_callback(app->calibrate_view, cc_speed_tune_confirm_cb, app);
+    cc_calibrate_view_set_skip_callback(app->calibrate_view, cc_speed_tune_skip_cb, app);
+    view_dispatcher_switch_to_view(app->view_dispatcher, CheapClickerViewCalibrate);
 }
 
 static void show_drawing(CheapClickerApp* app) {
@@ -198,8 +208,8 @@ void cc_scene_speed_tune_on_enter(void* context) {
     CheapClickerApp* app = context;
     cc_speed_tune_state_reset(app->speed_tune);
     scene_manager_set_scene_state(
-        app->scene_manager, CheapClickerSceneSpeedTune, CcSpeedTunePhaseInstructions);
-    show_instructions(app);
+        app->scene_manager, CheapClickerSceneSpeedTune, CcSpeedTunePhasePosition);
+    show_position(app);
 }
 
 bool cc_scene_speed_tune_on_event(void* context, SceneManagerEvent event) {
@@ -209,7 +219,7 @@ bool cc_scene_speed_tune_on_event(void* context, SceneManagerEvent event) {
         app->scene_manager, CheapClickerSceneSpeedTune);
 
     if(event.type == SceneManagerEventTypeBack) {
-        if(phase == CcSpeedTunePhaseInstructions) {
+        if(phase == CcSpeedTunePhasePosition) {
             scene_manager_previous_scene(app->scene_manager);
             return true;
         }
@@ -238,6 +248,10 @@ bool cc_scene_speed_tune_on_event(void* context, SceneManagerEvent event) {
 
 void cc_scene_speed_tune_on_exit(void* context) {
     CheapClickerApp* app = context;
+    cc_calibrate_view_set_confirm_callback(app->calibrate_view, NULL, NULL);
+    cc_calibrate_view_set_move_callback(app->calibrate_view, NULL, NULL);
+    cc_calibrate_view_set_get_pos_callback(app->calibrate_view, NULL, NULL);
+    cc_calibrate_view_set_skip_callback(app->calibrate_view, NULL, NULL);
     submenu_reset(app->submenu);
     dialog_ex_reset(app->dialog_ex);
     popup_reset(app->popup);
