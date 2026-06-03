@@ -122,6 +122,9 @@ typedef struct {
     uint8_t manual_layout[5];    // InputKey 0-4 → button index, CC_BUTTON_IDX_NONE = unset
     uint8_t manual_pending_key;  // key being reassigned, CC_BUTTON_IDX_NONE when idle
 
+    uint8_t monument_auto_btn;   // persisted Monument Attack auto-click button index
+    uint8_t monument_heal_btn;   // persisted Monument Attack heal button index
+
     FuriString* script_path;
 
     CcScript* script;

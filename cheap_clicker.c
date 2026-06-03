@@ -110,6 +110,8 @@ CheapClickerApp* cheap_clicker_alloc(void) {
     app->profile_count = 0;
     app->active_profile_idx = CC_PROFILE_IDX_NONE;
     app->manual_pending_key = CC_BUTTON_IDX_NONE;
+    app->monument_auto_btn  = CC_BUTTON_IDX_NONE;
+    app->monument_heal_btn  = CC_BUTTON_IDX_NONE;
     app->script = NULL;
 
     app->script = cc_script_alloc(app);

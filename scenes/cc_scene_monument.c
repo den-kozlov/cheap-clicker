@@ -2,6 +2,7 @@
 #include "../views/cc_monument_view.h"
 #include "../helpers/cc_monument.h"
 #include "../helpers/cc_ble.h"
+#include "../helpers/cc_profile.h"
 #include <string.h>
 
 static uint8_t s_selecting_for; // 0=auto button, 1=heal button
@@ -36,6 +37,8 @@ void cc_scene_monument_on_enter(void* context) {
     if(cc_ble_is_connected(app)) cc_ble_reset_cursor(app);
     cc_monument_view_set_callback(app->monument_view, cc_monument_view_cb, app);
     cc_monument_refresh(app);
+    cc_monument_view_set_auto_btn(app->monument_view, app->monument_auto_btn);
+    cc_monument_view_set_heal_btn(app->monument_view, app->monument_heal_btn);
     cc_monument_view_set_running(app->monument_view, cc_monument_is_running(app->monument));
     view_dispatcher_switch_to_view(app->view_dispatcher, CheapClickerViewMonument);
 }
@@ -57,10 +60,13 @@ bool cc_scene_monument_on_event(void* context, SceneManagerEvent event) {
     if((event.event & 0xFF) == CheapClickerCustomEventMonumentButtonSelected) {
         uint8_t idx = (uint8_t)((event.event >> 8) & 0xFF);
         if(s_selecting_for == 0) {
+            app->monument_auto_btn = idx;
             cc_monument_view_set_auto_btn(app->monument_view, idx);
         } else {
+            app->monument_heal_btn = idx;
             cc_monument_view_set_heal_btn(app->monument_view, idx);
         }
+        cc_profile_save_active(app);
         view_dispatcher_switch_to_view(app->view_dispatcher, CheapClickerViewMonument);
         return true;
     }
