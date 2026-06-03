@@ -8,7 +8,7 @@ static const uint8_t DELAY_VALUES[] = {1, 2, 3, 5, 8, 10, 15, 20};
 #define STEP_COUNT  (sizeof(STEP_VALUES)  / sizeof(STEP_VALUES[0]))
 #define DELAY_COUNT (sizeof(DELAY_VALUES) / sizeof(DELAY_VALUES[0]))
 
-static const uint16_t SYNC_VALUES[] = {0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000};
+static const uint16_t SYNC_VALUES[] = {0, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000, 18000, 20000};
 #define SYNC_COUNT (sizeof(SYNC_VALUES) / sizeof(SYNC_VALUES[0]))
 
 static uint8_t find_sync_idx(uint16_t val) {
