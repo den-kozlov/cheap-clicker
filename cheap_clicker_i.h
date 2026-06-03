@@ -106,7 +106,12 @@ typedef struct {
     CcMonumentView* monument_view;
     CcMonument*      monument;
     CcAccelTuneState* accel_tune;
-    float accel[CC_ACCEL_CAL_POINTS];  // accel multiplier per cal speed point; default 1.0
+    // Quadratic acceleration model: a(v) = c[0] + c[1]*v + c[2]*v²
+    // v = step_px / delay_ms; default: a(v) = 1 (c[0]=1, c[1]=c[2]=0)
+    float accel_c[3];
+    // Global cursor movement speed; used by cc_ble_move_to
+    uint8_t move_step;      // px per HID report for bulk phase
+    uint8_t move_delay_ms;  // ms between reports for bulk phase
 
     CcButtonDef buttons[CC_MAX_BUTTONS];  // global button definitions
     uint8_t button_count;
@@ -120,6 +125,8 @@ typedef struct {
     uint8_t button_edit_mode; // 0=profile name, 1=ble name, 0xFF=button name
     bool new_profile_pending; // true while a newly added profile has not yet been paired
     bool is_new_button;       // true when creating a button not yet committed to global list
+    bool calibrate_single_mode;   // true = calibrate one button only
+    uint8_t calibrate_target_btn; // 0-based index of the button to calibrate
     CcButtonDef edit_button_staging; // working copy while editing; committed on Save
 
     uint8_t manual_layout[5];    // InputKey 0-4 → button index, CC_BUTTON_IDX_NONE = unset
