@@ -142,9 +142,9 @@ void cc_ble_move_to(CheapClickerApp* app, int16_t x, int16_t y) {
 
 void cc_ble_draw_tune_lines(
     CheapClickerApp* app,
-    uint8_t step,
-    uint8_t ref_delay_ms,
-    const uint8_t test_delays_ms[4]) {
+    uint8_t fixed_delay_ms,
+    uint8_t ref_step,
+    const uint8_t test_steps[4]) {
     furi_assert(app);
     if(!app->ble_hid_profile) return;
 
@@ -155,18 +155,18 @@ void cc_ble_draw_tune_lines(
 
     for(uint8_t i = 0; i < 5; i++) {
         int16_t y = y_start + i * Y_SPACING;
-        uint8_t line_delay = (i == 0) ? ref_delay_ms : test_delays_ms[i - 1];
+        uint8_t line_step = (i == 0) ? ref_step : test_steps[i - 1];
 
         // Reposition at the same speed as the line itself so OS acceleration cancels out
-        cc_ble_move_to_raw(app, x_start, y, step, line_delay);
+        cc_ble_move_to_raw(app, x_start, y, line_step, fixed_delay_ms);
         furi_delay_ms(50);
 
         ble_profile_hid_mouse_press(app->ble_hid_profile, HID_MOUSE_BTN_LEFT);
         furi_delay_ms(30);
         for(uint8_t s = 0; s < N_STEPS; s++) {
-            ble_profile_hid_mouse_move(app->ble_hid_profile, (int8_t)step, 0);
-            s_cur_x += step;
-            furi_delay_ms(line_delay);
+            ble_profile_hid_mouse_move(app->ble_hid_profile, (int8_t)line_step, 0);
+            s_cur_x += line_step;
+            furi_delay_ms(fixed_delay_ms);
         }
         ble_profile_hid_mouse_release(app->ble_hid_profile, HID_MOUSE_BTN_LEFT);
         furi_delay_ms(50);

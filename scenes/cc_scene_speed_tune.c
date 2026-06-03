@@ -37,24 +37,25 @@ void cc_speed_tune_state_reset(CcSpeedTuneState* s) {
     furi_assert(s);
     s->round = 1;
     s->winner_idx = 0;
-    s->test_step = 20;
-    s->range_ms = 27;
-    s->test_delays[0] = 3;
-    s->test_delays[1] = 8;
-    s->test_delays[2] = 15;
-    s->test_delays[3] = 30;
+    s->fixed_delay_ms = 10;
+    s->range = 9;
+    // Round 1: geometric spread covering orders of magnitude
+    s->test_steps[0] = 20;
+    s->test_steps[1] = 10;
+    s->test_steps[2] = 5;
+    s->test_steps[3] = 2;
 }
 
 void cc_speed_tune_state_advance(CcSpeedTuneState* s) {
     furi_assert(s);
-    uint8_t w = s->test_delays[s->winner_idx];
-    uint8_t r = s->range_ms / 4;
+    uint8_t w = s->test_steps[s->winner_idx];
+    uint8_t r = s->range / 2;
     if(r < 1) r = 1;
-    s->test_delays[0] = (w > r * 2) ? (w - r * 2) : 1;
-    s->test_delays[1] = (w > r) ? (w - r) : 1;
-    s->test_delays[2] = w + r;
-    s->test_delays[3] = w + r * 2;
-    s->range_ms = r * 2;
+    s->test_steps[0] = (w > r) ? (w - r) : 1;
+    s->test_steps[1] = (w > r / 2) ? (w - r / 2) : 1;
+    s->test_steps[2] = w + r / 2;
+    s->test_steps[3] = w + r;
+    s->range = r;
     s->round++;
     s->winner_idx = 0;
 }
@@ -107,8 +108,8 @@ static void cc_speed_tune_dialog_cb(DialogExResult result, void* context) {
             app->scene_manager, CheapClickerSceneSpeedTune, CcSpeedTunePhasePosition);
         show_position(app);
     } else {
-        app->move_step = s->test_step;
-        app->move_delay_ms = s->test_delays[s->winner_idx];
+        app->move_step = s->test_steps[s->winner_idx];
+        app->move_delay_ms = s->fixed_delay_ms;
         cc_profile_save_active(app);
         scene_manager_previous_scene(app->scene_manager);
     }
@@ -153,7 +154,7 @@ static void show_drawing(CheapClickerApp* app) {
     view_dispatcher_switch_to_view(app->view_dispatcher, CheapClickerViewPopup);
 
     CcSpeedTuneState* s = app->speed_tune;
-    cc_ble_draw_tune_lines(app, s->test_step, SPEED_TUNE_REF_DELAY, s->test_delays);
+    cc_ble_draw_tune_lines(app, s->fixed_delay_ms, SPEED_TUNE_REF_STEP, s->test_steps);
 
     scene_manager_set_scene_state(
         app->scene_manager, CheapClickerSceneSpeedTune, CcSpeedTunePhaseSelection);
@@ -166,13 +167,13 @@ static void show_selection(CheapClickerApp* app) {
     submenu_set_header(app->submenu, "Which line matches Ref?");
 
     char label[32];
-    snprintf(label, sizeof(label), "A: delay=%ums", (unsigned)s->test_delays[0]);
+    snprintf(label, sizeof(label), "A: step=%u", (unsigned)s->test_steps[0]);
     submenu_add_item(app->submenu, label, 0, cc_speed_tune_submenu_cb, app);
-    snprintf(label, sizeof(label), "B: delay=%ums", (unsigned)s->test_delays[1]);
+    snprintf(label, sizeof(label), "B: step=%u", (unsigned)s->test_steps[1]);
     submenu_add_item(app->submenu, label, 1, cc_speed_tune_submenu_cb, app);
-    snprintf(label, sizeof(label), "C: delay=%ums", (unsigned)s->test_delays[2]);
+    snprintf(label, sizeof(label), "C: step=%u", (unsigned)s->test_steps[2]);
     submenu_add_item(app->submenu, label, 2, cc_speed_tune_submenu_cb, app);
-    snprintf(label, sizeof(label), "D: delay=%ums", (unsigned)s->test_delays[3]);
+    snprintf(label, sizeof(label), "D: step=%u", (unsigned)s->test_steps[3]);
     submenu_add_item(app->submenu, label, 3, cc_speed_tune_submenu_cb, app);
 
     submenu_set_selected_item(app->submenu, s->winner_idx);
@@ -185,10 +186,10 @@ static void show_continue(CheapClickerApp* app) {
     snprintf(
         body,
         sizeof(body),
-        "Round %u done.\nWinner: %c  delay=%ums",
+        "Round %u done.\nWinner: %c  step=%u",
         (unsigned)s->round,
         'A' + s->winner_idx,
-        (unsigned)s->test_delays[s->winner_idx]);
+        (unsigned)s->test_steps[s->winner_idx]);
 
     dialog_ex_reset(app->dialog_ex);
     dialog_ex_set_header(app->dialog_ex, "Speed Tune", 64, 4, AlignCenter, AlignTop);
@@ -224,8 +225,8 @@ bool cc_scene_speed_tune_on_event(void* context, SceneManagerEvent event) {
             return true;
         }
         if(phase == CcSpeedTunePhaseContinue) {
-            app->move_step = s->test_step;
-            app->move_delay_ms = s->test_delays[s->winner_idx];
+            app->move_step = s->test_steps[s->winner_idx];
+            app->move_delay_ms = s->fixed_delay_ms;
             cc_profile_save_active(app);
             scene_manager_previous_scene(app->scene_manager);
             return true;
