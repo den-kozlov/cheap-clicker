@@ -17,6 +17,7 @@
 #include <ble_profile/extra_profiles/hid_profile.h>
 
 #include "scenes/cc_scene.h"
+#include "scenes/cc_scene_speed_tune.h"
 #include "views/cc_start_view.h"
 #include "views/cc_monument_view.h"
 
@@ -104,6 +105,9 @@ typedef struct {
     CcManualView* manual_view;
     CcMonumentView* monument_view;
     CcMonument*     monument;
+    CcSpeedTuneState* speed_tune;
+    uint8_t move_step;       // pixels per BLE HID report; default 20
+    uint8_t move_delay_ms;   // ms between reports in cc_ble_move_to; default 5
 
     CcButtonDef buttons[CC_MAX_BUTTONS];  // global button definitions
     uint8_t button_count;

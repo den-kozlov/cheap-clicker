@@ -398,6 +398,10 @@ void cc_profile_save_active(CheapClickerApp* app) {
                 break;
             uint32_t active = app->active_profile_idx;
             if(!flipper_format_write_uint32(fff, "ActiveProfile", &active, 1)) break;
+            uint32_t step = app->move_step;
+            if(!flipper_format_write_uint32(fff, "MoveStep", &step, 1)) break;
+            uint32_t delay = app->move_delay_ms;
+            if(!flipper_format_write_uint32(fff, "MoveDelayMs", &delay, 1)) break;
         } while(0);
         flipper_format_file_close(fff);
     }
@@ -422,6 +426,14 @@ void cc_profile_load_active(CheapClickerApp* app) {
         uint32_t active = 0;
         if(!flipper_format_read_uint32(fff, "ActiveProfile", &active, 1)) break;
         app->active_profile_idx = (uint8_t)active;
+
+        uint32_t step = 20;
+        if(flipper_format_read_uint32(fff, "MoveStep", &step, 1))
+            app->move_step = (uint8_t)step;
+
+        uint32_t delay = 5;
+        if(flipper_format_read_uint32(fff, "MoveDelayMs", &delay, 1))
+            app->move_delay_ms = (uint8_t)delay;
     } while(0);
 
     flipper_format_file_close(fff);

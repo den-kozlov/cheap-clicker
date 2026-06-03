@@ -93,44 +93,85 @@ void cc_ble_reset_cursor(CheapClickerApp* app) {
         step /= 1.05f;
     }
     step = 127.0f;
-    for(int i = 0; i < 40; i++) {
-        ble_profile_hid_mouse_move(app->ble_hid_profile, 10, 0);
-        furi_delay_ms(2);
+    for(int i = 0; i < 20; i++) {
+        ble_profile_hid_mouse_move(app->ble_hid_profile, 20, 0);
+        furi_delay_ms(5);
     }
     for(int i = 0; i < 100; i++) {
         ble_profile_hid_mouse_move(app->ble_hid_profile, 0, -(int16_t)step);
         furi_delay_ms(2 );
-        step /= 1.1f;
+        step /= 1.05f;
     }
 
     s_cur_x = 400;
     s_cur_y = 0;
 }
 
-void cc_ble_move_to(CheapClickerApp* app, int16_t x, int16_t y) {
-    furi_assert(app);
-
+static void cc_ble_move_to_raw(
+    CheapClickerApp* app,
+    int16_t x,
+    int16_t y,
+    uint8_t step,
+    uint8_t delay_ms) {
     if(!app->ble_hid_profile) return;
     if(x < 0) x = 0;
     if(y < 0) y = 0;
-    // snap target to 20px grid
-    x = (x / 20) * 20;
-    y = (y / 20) * 20;
+    x = (x / step) * step;
+    y = (y / step) * step;
 
     int16_t dx = x - s_cur_x;
     int16_t dy = y - s_cur_y;
 
     while(dx != 0 || dy != 0) {
-        int8_t step_x = dx > 0 ? 20 : (dx < 0 ? -20 : 0);
-        int8_t step_y = dy > 0 ? 20 : (dy < 0 ? -20 : 0);
+        int8_t step_x = dx > 0 ? (int8_t)step : (dx < 0 ? -(int8_t)step : 0);
+        int8_t step_y = dy > 0 ? (int8_t)step : (dy < 0 ? -(int8_t)step : 0);
         ble_profile_hid_mouse_move(app->ble_hid_profile, step_x, step_y);
         s_cur_x += step_x;
         s_cur_y += step_y;
         dx = x - s_cur_x;
         dy = y - s_cur_y;
-        furi_delay_ms(4);
+        furi_delay_ms(delay_ms);
     }
     furi_delay_ms(10);
+}
+
+void cc_ble_move_to(CheapClickerApp* app, int16_t x, int16_t y) {
+    furi_assert(app);
+    cc_ble_move_to_raw(app, x, y, app->move_step, app->move_delay_ms);
+}
+
+void cc_ble_draw_tune_lines(
+    CheapClickerApp* app,
+    uint8_t step,
+    uint8_t ref_delay_ms,
+    const uint8_t test_delays_ms[4]) {
+    furi_assert(app);
+    if(!app->ble_hid_profile) return;
+
+    const uint8_t POS_STEP = 5;
+    const uint8_t POS_DELAY = 30;
+    const uint8_t N_STEPS = 20;
+    const int16_t X_START = 420;
+    const int16_t Y_START = 50;
+    const int16_t Y_SPACING = 40;
+
+    for(uint8_t i = 0; i < 5; i++) {
+        int16_t y = Y_START + i * Y_SPACING;
+        uint8_t line_delay = (i == 0) ? ref_delay_ms : test_delays_ms[i - 1];
+
+        cc_ble_move_to_raw(app, X_START, y, POS_STEP, POS_DELAY);
+        furi_delay_ms(50);
+
+        ble_profile_hid_mouse_press(app->ble_hid_profile, HID_MOUSE_BTN_LEFT);
+        furi_delay_ms(30);
+        for(uint8_t s = 0; s < N_STEPS; s++) {
+            ble_profile_hid_mouse_move(app->ble_hid_profile, (int8_t)step, 0);
+            s_cur_x += step;
+            furi_delay_ms(line_delay);
+        }
+        ble_profile_hid_mouse_release(app->ble_hid_profile, HID_MOUSE_BTN_LEFT);
+        furi_delay_ms(50);
+    }
 }
 
 void cc_ble_press_button(
