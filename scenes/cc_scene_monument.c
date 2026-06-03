@@ -32,6 +32,7 @@ static void cc_monument_refresh(CheapClickerApp* app) {
 
 void cc_scene_monument_on_enter(void* context) {
     CheapClickerApp* app = context;
+    s_selecting_for = 0;
     cc_monument_view_set_callback(app->monument_view, cc_monument_view_cb, app);
     cc_monument_refresh(app);
     cc_monument_view_set_running(app->monument_view, cc_monument_is_running(app->monument));

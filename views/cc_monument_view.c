@@ -63,11 +63,7 @@ static void cc_monument_view_draw(Canvas* canvas, void* _m) {
     // Row 2: Start/Stop
     bool can_start = (m->selected_btn != CC_BUTTON_IDX_NONE) && m->connected && !m->is_running;
 
-    if(m->focused_row == 2 && m->is_running) {
-        elements_button_center(canvas, "Stop");
-    } else if(m->focused_row == 2 && can_start) {
-        elements_button_center(canvas, "Start");
-    } else if(m->is_running) {
+    if(m->is_running) {
         elements_button_center(canvas, "Stop");
     } else if(can_start) {
         elements_button_center(canvas, "Start");
@@ -84,7 +80,7 @@ static bool cc_monument_view_input(InputEvent* event, void* ctx) {
     if(event->type != InputTypeShort) return false;
 
     uint8_t selected_btn = CC_BUTTON_IDX_NONE;
-    uint8_t heal_btn     = CC_BUTTON_IDX_NONE;
+    uint8_t button_count = 0;
     uint8_t focused_row  = 0;
     bool    is_running   = false;
     bool    connected    = false;
@@ -94,14 +90,12 @@ static bool cc_monument_view_input(InputEvent* event, void* ctx) {
         CcMonumentViewModel* m,
         {
             selected_btn = m->selected_btn;
-            heal_btn     = m->heal_btn;
+            button_count = m->button_count;
             focused_row  = m->focused_row;
             is_running   = m->is_running;
             connected    = m->connected;
         },
         false);
-
-    (void)heal_btn;
 
     bool can_start = (selected_btn != CC_BUTTON_IDX_NONE) && connected && !is_running;
 
@@ -124,9 +118,9 @@ static bool cc_monument_view_input(InputEvent* event, void* ctx) {
 
     case InputKeyOk:
         if(focused_row == 0) {
-            if(v->cb) v->cb(v->cb_ctx, CcMonumentViewEventSelectAuto);
+            if(button_count > 0 && v->cb) v->cb(v->cb_ctx, CcMonumentViewEventSelectAuto);
         } else if(focused_row == 1) {
-            if(v->cb) v->cb(v->cb_ctx, CcMonumentViewEventSelectHeal);
+            if(button_count > 0 && v->cb) v->cb(v->cb_ctx, CcMonumentViewEventSelectHeal);
         } else { // focused_row == 2
             if(is_running) {
                 if(v->cb) v->cb(v->cb_ctx, CcMonumentViewEventStop);
@@ -139,9 +133,8 @@ static bool cc_monument_view_input(InputEvent* event, void* ctx) {
     case InputKeyRight:
         if(is_running) {
             if(v->cb) v->cb(v->cb_ctx, CcMonumentViewEventHealOnce);
-            return true;
         }
-        return false;
+        return true;
 
     default:
         return false;

@@ -59,6 +59,7 @@ void cc_monument_start(CcMonument* ac, CheapClickerApp* app, uint8_t button_idx)
     furi_assert(!ac->running);
     ac->app = app;
     ac->button_idx = button_idx;
+    ac->heal_request = CC_BUTTON_IDX_NONE;
     ac->running = true;
     ac->thread = furi_thread_alloc_ex("CcMonument", 1024, cc_monument_worker, ac);
     furi_thread_start(ac->thread);
