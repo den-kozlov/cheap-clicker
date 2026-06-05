@@ -65,6 +65,9 @@ static void cc_monument_view_draw(Canvas* canvas, void* _m) {
 
     if(m->is_running) {
         elements_button_center(canvas, "Stop");
+        if(m->heal_btn != CC_BUTTON_IDX_NONE) {
+            elements_button_right(canvas, "Heal");
+        }
     } else if(can_start) {
         elements_button_center(canvas, "Start");
     } else {
