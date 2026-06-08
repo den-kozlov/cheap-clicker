@@ -41,7 +41,7 @@ struct CcScript {
 
     // Execution state
     uint16_t pc;
-    CcRunLoopFrame loop_stack[2];
+    CcRunLoopFrame loop_stack[4];
     uint8_t loop_depth;
 
     CcScriptStatus status; // protected by mutex
@@ -138,23 +138,27 @@ static bool cc_script_do_compile(CcScript* s) {
             }
             tmp[count++] = (CcInstr){.type = CcInstrDelay, .delay_ms = (uint32_t)ms};
 
-        } else if(strncmp(line, "LOOP ", 5) == 0) {
-            if(pending_depth >= 2) {
+        } else if(strncmp(line, "LOOP", 4) == 0 && (line[4] == '\0' || line[4] == ' ')) {
+            if(pending_depth >= 4) {
                 snprintf(s->status.error_msg, sizeof(s->status.error_msg),
-                    "Line %zu: LOOP nesting > 2", s->line_num);
+                    "Line %zu: LOOP nesting > 4", s->line_num);
                 ok = false;
                 break;
             }
-            char* end;
-            long n = strtol(line + 5, &end, 10);
-            if(end == line + 5 || n < 0) {
-                snprintf(s->status.error_msg, sizeof(s->status.error_msg),
-                    "Line %zu: bad LOOP count", s->line_num);
-                ok = false;
-                break;
+            uint32_t n = 0; // 0 = infinite
+            if(line[4] == ' ') {
+                char* end;
+                long val = strtol(line + 5, &end, 10);
+                if(end == line + 5 || val < 0) {
+                    snprintf(s->status.error_msg, sizeof(s->status.error_msg),
+                        "Line %zu: bad LOOP count", s->line_num);
+                    ok = false;
+                    break;
+                }
+                n = (uint32_t)val;
             }
             pending_depth++;
-            tmp[count++] = (CcInstr){.type = CcInstrLoopStart, .loop_count = (uint32_t)n};
+            tmp[count++] = (CcInstr){.type = CcInstrLoopStart, .loop_count = n};
 
         } else if(strcmp(line, "END") == 0) {
             if(pending_depth == 0) {

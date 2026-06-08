@@ -144,14 +144,14 @@ Scripts are plain `.txt` files stored on the SD card. One instruction per line.
 
 PRESS <button_name>    # Click a named button from the active profile
 DELAY <ms>             # Wait N milliseconds
-LOOP <n>               # Repeat n times (0 = infinite)
+LOOP [n]               # Repeat n times; omit n or use 0 for infinite
 END                    # End of a LOOP body
 ```
 
 ### Example: game loop
 
 ```
-LOOP 0
+LOOP
     PRESS build_all
     DELAY 600
     LOOP 10
@@ -167,7 +167,7 @@ END
 
 **Limits:**
 - Max 512 instructions per script
-- Max `LOOP` nesting depth: 2
+- Max `LOOP` nesting depth: 4
 - Button names are case-sensitive
 
 ---

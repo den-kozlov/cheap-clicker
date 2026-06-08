@@ -79,7 +79,7 @@ Profiles are slot-indexed 0–4. On `cc_profile_delete`, remaining profiles are 
 ```
 PRESS <button_name>   # click a named button in the active profile
 DELAY <ms>            # wait N milliseconds
-LOOP <n>              # repeat n times (0 = infinite); max nesting depth 2
+LOOP [n]              # repeat n times (0 or omitted = infinite); max nesting depth 4
 END                   # end of LOOP body
 # comment            # ignored
 ```
