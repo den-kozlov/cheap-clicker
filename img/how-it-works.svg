@@ -1,0 +1,205 @@
+<svg width="840" height="400" viewBox="0 0 840 400" xmlns="http://www.w3.org/2000/svg"
+     font-family="'Segoe UI',system-ui,Arial,sans-serif">
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#161b22"/>
+    </linearGradient>
+
+    <!-- App icon: bright sky-blue, lighter at top -->
+    <linearGradient id="icon-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#74DEFF"/>
+      <stop offset="100%" stop-color="#1AAEE0"/>
+    </linearGradient>
+
+    <!-- Face: spherical light from top-center, cream highlight → warm salmon → dark orange edge -->
+    <radialGradient id="face" cx="48%" cy="28%" r="72%">
+      <stop offset="0%"   stop-color="#FEE0C2"/>
+      <stop offset="42%"  stop-color="#ECA882"/>
+      <stop offset="78%"  stop-color="#D07848"/>
+      <stop offset="100%" stop-color="#B86030"/>
+    </radialGradient>
+
+    <!-- Ears: flat brownish-tan, no pink -->
+    <radialGradient id="ear" cx="40%" cy="35%" r="65%">
+      <stop offset="0%"   stop-color="#C89870"/>
+      <stop offset="100%" stop-color="#A07048"/>
+    </radialGradient>
+
+    <!-- Snout: muted brownish-pink, darker than face -->
+    <radialGradient id="snout" cx="50%" cy="35%" r="62%">
+      <stop offset="0%"   stop-color="#D48A6A"/>
+      <stop offset="100%" stop-color="#A05838"/>
+    </radialGradient>
+
+    <!-- Nostril: dark maroon -->
+    <radialGradient id="nostril" cx="40%" cy="30%" r="70%">
+      <stop offset="0%"   stop-color="#7A3020"/>
+      <stop offset="100%" stop-color="#501808"/>
+    </radialGradient>
+
+    <!-- Filters -->
+    <filter id="glow-orange" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-blue" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="icon-shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="7" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+
+    <!-- Arrowheads -->
+    <marker id="arr-orange" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#FF6600"/>
+    </marker>
+    <marker id="arr-grey" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d444d"/>
+    </marker>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0082FC"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="840" height="400" rx="14" fill="url(#bg)"/>
+
+  <!-- Title -->
+  <text x="420" y="44" text-anchor="middle" fill="#f0f6fc"
+        font-size="19" font-weight="700" letter-spacing="0.3">How Cheap Clicker Works</text>
+
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!--  NODE 1 — Script File                                      -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <rect x="18" y="100" width="144" height="200" rx="12"
+        fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <circle cx="32" cy="114" r="11" fill="#FF6600" filter="url(#glow-orange)"/>
+  <text x="32" y="119" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">1</text>
+
+  <!-- Document icon -->
+  <rect x="72" y="118" width="36" height="46" rx="3" fill="#21262d" stroke="#3d444d" stroke-width="1"/>
+  <polygon points="96,118 108,130 108,118" fill="#0d1117"/>
+  <polygon points="96,118 96,130 108,130"  fill="#3d444d"/>
+  <line x1="78" y1="141" x2="102" y2="141" stroke="#56d364" stroke-width="1.5"/>
+  <line x1="78" y1="149" x2="100" y2="149" stroke="#79c0ff" stroke-width="1.5"/>
+  <line x1="78" y1="157" x2="95"  y2="157" stroke="#ffa657" stroke-width="1.5"/>
+
+  <text x="90" y="184" text-anchor="middle" fill="#f0f6fc" font-size="14" font-weight="600">Script File</text>
+  <text x="90" y="202" text-anchor="middle" fill="#8b949e" font-size="11">SD card · .txt</text>
+
+  <rect x="30" y="214" width="120" height="74" rx="7" fill="#010409" stroke="#21262d" stroke-width="1"/>
+  <text x="40" y="231" fill="#56d364" font-size="10" font-family="'Courier New',Courier,monospace">LOOP 0</text>
+  <text x="40" y="245" fill="#79c0ff" font-size="10" font-family="'Courier New',Courier,monospace">  PRESS btn</text>
+  <text x="40" y="259" fill="#ffa657" font-size="10" font-family="'Courier New',Courier,monospace">  DELAY 600</text>
+  <text x="40" y="273" fill="#ff7b72" font-size="10" font-family="'Courier New',Courier,monospace">END</text>
+
+  <line x1="163" y1="198" x2="196" y2="198"
+        stroke="#FF6600" stroke-width="2" marker-end="url(#arr-orange)"/>
+  <text x="179" y="192" text-anchor="middle" fill="#FF6600" font-size="10">loads</text>
+
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!--  NODE 2 — Flipper Zero                                     -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <rect x="200" y="64" width="302" height="286" rx="16"
+        fill="#161b22" stroke="#FF6600" stroke-width="2" filter="url(#glow-orange)"/>
+  <circle cx="216" cy="80" r="11" fill="#FF6600"/>
+  <text x="216" y="85" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">2</text>
+  <text x="351" y="90" text-anchor="middle" fill="#FF6600"
+        font-size="12" font-weight="700" letter-spacing="2">FLIPPER ZERO</text>
+
+  <!-- cc_script sub-box -->
+  <rect x="218" y="102" width="266" height="106" rx="10"
+        fill="#0d1117" stroke="#21262d" stroke-width="1.2"/>
+  <circle cx="248" cy="130" r="10" fill="none" stroke="#ffa657" stroke-width="2.5"/>
+  <circle cx="248" cy="130" r="4"  fill="#ffa657"/>
+  <line x1="248" y1="117" x2="248" y2="121" stroke="#ffa657" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="248" y1="139" x2="248" y2="143" stroke="#ffa657" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="235" y1="130" x2="239" y2="130" stroke="#ffa657" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="257" y1="130" x2="261" y2="130" stroke="#ffa657" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="239" y1="121" x2="242" y2="124" stroke="#ffa657" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="254" y1="136" x2="257" y2="139" stroke="#ffa657" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="257" y1="121" x2="254" y2="124" stroke="#ffa657" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="242" y1="136" x2="239" y2="139" stroke="#ffa657" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="268" y="130" fill="#f0f6fc" font-size="14" font-weight="600">cc_script</text>
+  <text x="234" y="152" fill="#8b949e" font-size="11">Parses &amp; compiles to bytecode</text>
+  <text x="234" y="168" fill="#8b949e" font-size="11">Runs in dedicated FuriThread</text>
+  <text x="234" y="184" fill="#8b949e" font-size="11">Max 512 instructions · depth 2</text>
+
+  <line x1="351" y1="208" x2="351" y2="224"
+        stroke="#3d444d" stroke-width="1.5" marker-end="url(#arr-grey)"/>
+
+  <!-- cc_ble sub-box -->
+  <rect x="218" y="228" width="266" height="106" rx="10"
+        fill="#0d1117" stroke="#0082FC" stroke-width="1.5" filter="url(#glow-blue)"/>
+  <rect x="239" y="248" width="18" height="26" rx="9" fill="none" stroke="#0082FC" stroke-width="2"/>
+  <line x1="248" y1="248" x2="248" y2="261" stroke="#0082FC" stroke-width="1.5"/>
+  <line x1="239" y1="261" x2="257" y2="261" stroke="#0082FC" stroke-width="1"/>
+  <text x="268" y="262" fill="#f0f6fc" font-size="14" font-weight="600">cc_ble</text>
+  <text x="234" y="282" fill="#8b949e" font-size="11">Moves cursor: trigger → button</text>
+  <text x="234" y="298" fill="#8b949e" font-size="11">Sends BLE HID click events</text>
+  <text x="234" y="314" fill="#8b949e" font-size="11">5 profiles · unique BLE MACs</text>
+
+  <line x1="502" y1="281" x2="522" y2="281" stroke="#0082FC" stroke-width="2"/>
+
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!--  BLE SIGNAL                                                -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <circle cx="522" cy="281" r="4" fill="#0082FC" filter="url(#glow-blue)"/>
+  <path d="M522,261 A20,20 0 0,1 522,301"
+        fill="none" stroke="#0082FC" stroke-width="2.5" stroke-linecap="round" opacity="0.95"/>
+  <path d="M522,245 A36,36 0 0,1 522,317"
+        fill="none" stroke="#0082FC" stroke-width="2"   stroke-linecap="round" opacity="0.6"/>
+  <path d="M522,229 A52,52 0 0,1 522,333"
+        fill="none" stroke="#0082FC" stroke-width="1.5" stroke-linecap="round" opacity="0.28"/>
+  <text x="548" y="246" text-anchor="middle" fill="#0082FC"
+        font-size="11" font-weight="600">BLE HID</text>
+  <line x1="578" y1="281" x2="616" y2="281"
+        stroke="#0082FC" stroke-width="2" stroke-dasharray="5,4"
+        marker-end="url(#arr-blue)"/>
+
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!--  NODE 3 — Phone                                            -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <rect x="620" y="70" width="188" height="300" rx="22"
+        fill="#161b22" stroke="#30363d" stroke-width="2"/>
+  <rect x="632" y="92" width="164" height="258" rx="8" fill="#010409"/>
+  <rect x="683" y="86" width="62" height="12" rx="6" fill="#21262d"/>
+  <circle cx="636" cy="88" r="11" fill="#FF6600" filter="url(#glow-orange)"/>
+  <text x="636" y="93" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">3</text>
+
+  <!-- Pig emoji -->
+  <text x="714" y="185" text-anchor="middle" font-size="88"
+        font-family="Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif">🐷</text>
+
+  <!-- Game label -->
+  <text x="714" y="222" text-anchor="middle" fill="#f0f6fc" font-size="14" font-weight="700">Cheapshot</text>
+
+  <!-- Divider -->
+  <line x1="646" y1="234" x2="782" y2="234" stroke="#21262d" stroke-width="1.5"/>
+
+  <!-- Tap ripples -->
+  <circle cx="714" cy="293" r="20" fill="none" stroke="#FF6600" stroke-width="2.5"
+          opacity="0.9" filter="url(#glow-orange)"/>
+  <circle cx="714" cy="293" r="34" fill="none" stroke="#FF6600" stroke-width="1.5" opacity="0.5"/>
+  <circle cx="714" cy="293" r="48" fill="none" stroke="#FF6600" stroke-width="1"   opacity="0.2"/>
+
+  <!-- Cursor -->
+  <g transform="translate(700,276)">
+    <polygon points="0,0 0,24 6,18 11,28 14,27 9,17 17,17"
+             fill="#f0f6fc" stroke="#222" stroke-width="0.8" stroke-linejoin="round"/>
+  </g>
+
+  <text x="714" y="358" text-anchor="middle" fill="#FF6600" font-size="11" font-weight="600">virtual tap</text>
+  <text x="714" y="385" text-anchor="middle" fill="#8b949e" font-size="12">Phone / Tablet</text>
+
+</svg>
