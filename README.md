@@ -206,17 +206,17 @@ cheap_clicker_i.h        ← CheapClickerApp root state struct
 ├── scenes/              ← Scene Manager scenes
 │   ├── cc_scene_start       Main screen
 │   ├── cc_scene_profiles    Profile list
-│   ├── cc_scene_calibrate   Cursor calibration
+│   ├── cc_scene_calibrate   Buttons position calibration
 │   ├── cc_scene_run         Script execution
 │   ├── cc_scene_monument    Monument Attack
 │   └── ...
 │
 ├── views/               ← custom View implementations
 │   ├── cc_start_view        Main screen
-│   ├── cc_calibrate_view    D-pad cursor control
-│   ├── cc_run_view          Script execution status
-│   ├── cc_monument_view     Monument Attack status
-│   └── cc_manual_view       Manual button mapping
+│   ├── cc_calibrate_view    Button location calibration view
+│   ├── cc_run_view          Script execution view
+│   ├── cc_monument_view     Monument Attack view
+│   └── cc_manual_view       Manual button press view
 │
 └── helpers/             ← business logic
     ├── cc_ble.c         BLE HID mouse, cursor movement
