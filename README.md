@@ -28,6 +28,7 @@
 - [Build & Install](#-build--install)
 - [Screenshots](#-screenshots)
 - [Script Syntax](#-script-syntax)
+- [Manual Mode](#-manual-mode)
 - [Profile Storage Layout](#-profile-storage-layout)
 - [Architecture](#-architecture)
 - [Contributing](#-contributing)
@@ -51,7 +52,7 @@ No root, no game mods — just honest BLE HID.
 | 🎯 **Calibration** | D-pad cursor control to precisely map button coordinates on screen |
 | 📜 **Scripts** | Automation language with loops, delays, and named button presses |
 | ⚔️ **Monument Attack** | Dedicated auto-attack mode with heal support |
-| 🕹️ **Manual mode** | Map D-pad directions to game buttons for real-time manual control |
+| 🕹️ **Manual mode** | Map Flipper buttons to game buttons; short press fires immediately, long press positions the cursor and fires on release |
 | ⚡ **Speed tuning** | Quadratic cursor acceleration model and per-step movement tuning |
 | 🔄 **Cursor sync** | Auto cursor reset when position drifts beyond a configurable threshold |
 
@@ -169,6 +170,34 @@ END
 - Max 512 instructions per script
 - Max `LOOP` nesting depth: 4
 - Button names are case-sensitive
+
+---
+
+## 🕹️ Manual Mode
+
+Manual mode lets you trigger game buttons in real time from the Flipper's physical buttons.
+
+### Controls
+
+| Input | Action |
+|-------|--------|
+| **Short press** any mapped key | Fire the button immediately (full sequence) |
+| **Long press** any mapped key | Move cursor to position and hold — action fires when you **release** the key |
+| **Long press Back** | Open key configuration — pick which key maps to which button |
+| **Short press Back** | Exit manual mode |
+
+### Postponed release detail
+
+Long press behaviour depends on the button type:
+
+- **Press** button — cursor moves to the button's position on long press; a click is sent the moment you release the Flipper key.
+- **Drag & Release** button — cursor moves to the trigger point, the left mouse button is held down, then the cursor drags to the button's position on long press; the mouse button is released (triggering the action) when you release the Flipper key.
+
+The held row is highlighted (inverted) on screen so you can see which action is pending.
+
+### Mapping keys
+
+Long-press **Back** to open the configuration submenu. It lists all five Flipper keys with their current assignments. Select a key, then pick a button from your profile (or "None" to clear it).
 
 ---
 
