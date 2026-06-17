@@ -27,6 +27,18 @@ void cc_ble_press_button(
     int16_t btn_y,
     uint32_t panel_delay_ms);
 void cc_ble_click_at(CheapClickerApp* app, int16_t x, int16_t y);
+// Moves to trigger, presses left mouse, moves to btn position. Mouse stays held on return.
+void cc_ble_drag_begin(
+    CheapClickerApp* app,
+    int16_t trigger_x,
+    int16_t trigger_y,
+    int16_t btn_x,
+    int16_t btn_y,
+    uint32_t panel_delay_ms);
+// Releases left mouse button at the current cursor position.
+void cc_ble_mouse_release(CheapClickerApp* app);
+// Presses and immediately releases left mouse at the current cursor position (no move).
+void cc_ble_click_now(CheapClickerApp* app);
 void cc_ble_move_by(CheapClickerApp* app, int8_t dx, int8_t dy);
 // draw_ref=true: draw reference line first (once per calibration session)
 void cc_ble_draw_accel_lines(CheapClickerApp* app, uint8_t cal_point, uint8_t m_test, bool draw_ref);

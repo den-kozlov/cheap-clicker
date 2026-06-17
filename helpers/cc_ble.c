@@ -223,6 +223,46 @@ void cc_ble_click_at(CheapClickerApp* app, int16_t x, int16_t y) {
     furi_delay_ms(5);
 }
 
+void cc_ble_drag_begin(
+    CheapClickerApp* app,
+    int16_t trigger_x,
+    int16_t trigger_y,
+    int16_t btn_x,
+    int16_t btn_y,
+    uint32_t panel_delay_ms) {
+    furi_assert(app);
+    if(!app->ble_hid_profile) return;
+    FuriHalBleProfileBase* profile = app->ble_hid_profile;
+
+    if(app->sync_dist > 0 && s_dist_accum >= (uint32_t)app->sync_dist) {
+        cc_ble_reset_cursor(app);
+        s_dist_accum = 0;
+    }
+
+    cc_ble_move_to(app, trigger_x, trigger_y);
+    ble_profile_hid_mouse_press(profile, HID_MOUSE_BTN_LEFT);
+    furi_delay_ms(panel_delay_ms);
+    cc_ble_move_to(app, btn_x, btn_y);
+    // Mouse remains held; caller must call cc_ble_mouse_release when done.
+}
+
+void cc_ble_mouse_release(CheapClickerApp* app) {
+    furi_assert(app);
+    if(!app->ble_hid_profile) return;
+    ble_profile_hid_mouse_release(app->ble_hid_profile, HID_MOUSE_BTN_LEFT);
+    furi_delay_ms(50);
+}
+
+void cc_ble_click_now(CheapClickerApp* app) {
+    furi_assert(app);
+    if(!app->ble_hid_profile) return;
+    FuriHalBleProfileBase* profile = app->ble_hid_profile;
+    ble_profile_hid_mouse_press(profile, HID_MOUSE_BTN_LEFT);
+    furi_delay_ms(5);
+    ble_profile_hid_mouse_release(profile, HID_MOUSE_BTN_LEFT);
+    furi_delay_ms(5);
+}
+
 void cc_ble_move_by(CheapClickerApp* app, int8_t dx, int8_t dy) {
     furi_assert(app);
     if(!app->ble_hid_profile) return;
