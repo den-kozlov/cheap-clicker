@@ -35,7 +35,8 @@ static void cc_manual_refresh(CheapClickerApp* app) {
         app->manual_layout,
         (const char (*)[32])name_buf,
         app->button_count,
-        cc_ble_is_connected(app));
+        cc_ble_is_connected(app),
+        app->manual_holding_key);
 }
 
 void cc_scene_manual_on_enter(void* context) {

@@ -5,67 +5,66 @@
 #include <string.h>
 #include <stdio.h>
 
-// Left panel: D-pad schematic (0-62px wide)
-// Right panel: key→name list (64-127px)
-// Separator at x=63
-
-#define BOX_W 12
-#define BOX_H  9
-#define BOX_R  2
-
-// D-pad center at (37, 32)
-#define DPAD_CX   37
-#define DPAD_CY   32
-#define DPAD_STEP 13  // distance from center to each direction button center
+static const char* const KEY_LABELS[5] = {"Up", "Dn", "Lt", "Rt", "OK"};
+static const uint8_t ROW_Y[5] = {8, 19, 30, 41, 52};
 
 typedef struct {
-    char labels[5][9]; // Up=0 Down=1 Right=2 Left=3 Ok=4; 8 chars + null; "-" if NONE
+    char labels[5][20];
     bool ble_connected;
+    uint8_t holding_key; // CC_BUTTON_IDX_NONE = none, 0-4 = row to invert
 } CcManualViewModel;
 
 struct CcManualView {
     View* view;
     CcManualViewCallback cb;
     void* cb_ctx;
+    uint8_t long_pressed; // bitmask: bit i set when InputKey i had InputTypeLong
 };
-
-static void cc_manual_draw_box(Canvas* canvas, int x, int y, const char* letter) {
-    canvas_draw_rframe(canvas, x, y, BOX_W, BOX_H, BOX_R);
-    canvas_draw_str_aligned(
-        canvas, x + BOX_W / 2, y + BOX_H / 2, AlignCenter, AlignCenter, letter);
-}
 
 static void cc_manual_view_draw(Canvas* canvas, void* _m) {
     CcManualViewModel* m = _m;
-
     canvas_set_font(canvas, FontSecondary);
 
-    // Left panel: controller schematic
-    cc_manual_draw_box(canvas, DPAD_CX - BOX_W / 2, DPAD_CY - DPAD_STEP - BOX_H / 2, "U");
-    cc_manual_draw_box(canvas, DPAD_CX - BOX_W / 2, DPAD_CY + DPAD_STEP - BOX_H / 2, "D");
-    cc_manual_draw_box(canvas, DPAD_CX - DPAD_STEP - BOX_W / 2, DPAD_CY - BOX_H / 2, "L");
-    cc_manual_draw_box(canvas, DPAD_CX + DPAD_STEP - BOX_W / 2, DPAD_CY - BOX_H / 2, "R");
-    cc_manual_draw_box(canvas, DPAD_CX - BOX_W / 2, DPAD_CY - BOX_H / 2, "O");
-
-    // Separator
-    canvas_draw_line(canvas, 63, 0, 63, 63);
-
-    // Right panel: key→button name list
-    static const char* const key_letters[5] = {"U", "D", "R", "L", "O"};
     for(uint8_t i = 0; i < 5; i++) {
-        char buf[12];
-        snprintf(buf, sizeof(buf), "%s:%s", key_letters[i], m->labels[i]);
-        canvas_draw_str(canvas, 65, 9 + i * 11, buf);
+        uint8_t y = ROW_Y[i];
+        bool held = (m->holding_key == i);
+
+        if(held) {
+            canvas_set_color(canvas, ColorBlack);
+            canvas_draw_box(canvas, 0, y - 8, 128, 10);
+            canvas_set_color(canvas, ColorWhite);
+        }
+
+        char buf[24];
+        snprintf(buf, sizeof(buf), "%s: %s", KEY_LABELS[i], m->labels[i]);
+        canvas_draw_str(canvas, 0, y, buf);
+
+        if(held) {
+            canvas_set_color(canvas, ColorBlack);
+        }
     }
 
-    // BLE status at bottom-right
-    canvas_draw_str(canvas, 65, 62, m->ble_connected ? "BT:OK" : "BT:--");
+    // BT status: right-aligned, same colour as row 0 if it is inverted
+    if(m->holding_key == 0) canvas_set_color(canvas, ColorWhite);
+    canvas_draw_str_aligned(
+        canvas, 127, ROW_Y[0], AlignRight, AlignBottom,
+        m->ble_connected ? "BT:OK" : "BT:--");
+    canvas_set_color(canvas, ColorBlack);
+
+    // Persistent config hint at bottom
+    canvas_draw_str(canvas, 0, 63, "Hold Bk: config");
 }
 
 static bool cc_manual_view_input(InputEvent* event, void* ctx) {
     CcManualView* v = ctx;
 
-    if(event->key == InputKeyBack) return false;
+    if(event->key == InputKeyBack) {
+        if(event->type == InputTypeLong) {
+            if(v->cb) v->cb(v->cb_ctx, CcManualViewEventConfigure, InputKeyBack);
+            return true;
+        }
+        return false; // short/press/release on Back → let dispatcher exit
+    }
 
     uint8_t idx = (uint8_t)event->key;
     if(idx > 4) return false; // only Up(0) Down(1) Left(2) Right(3) Ok(4)
@@ -75,10 +74,19 @@ static bool cc_manual_view_input(InputEvent* event, void* ctx) {
         return true;
     }
     if(event->type == InputTypeLong) {
-        if(v->cb) v->cb(v->cb_ctx, CcManualViewEventReassign, event->key);
+        v->long_pressed |= (uint8_t)(1u << idx);
+        if(v->cb) v->cb(v->cb_ctx, CcManualViewEventLongBegin, event->key);
         return true;
     }
-    return false;
+    if(event->type == InputTypeRelease) {
+        if(v->long_pressed & (uint8_t)(1u << idx)) {
+            v->long_pressed &= (uint8_t)~(1u << idx);
+            if(v->cb) v->cb(v->cb_ctx, CcManualViewEventLongRelease, event->key);
+            return true;
+        }
+        return false;
+    }
+    return false; // InputTypePress and InputTypeRepeat are ignored
 }
 
 CcManualView* cc_manual_view_alloc(void) {
@@ -91,6 +99,7 @@ CcManualView* cc_manual_view_alloc(void) {
     view_set_input_callback(v->view, cc_manual_view_input);
     v->cb = NULL;
     v->cb_ctx = NULL;
+    v->long_pressed = 0;
     return v;
 }
 
@@ -116,7 +125,8 @@ void cc_manual_view_update(
     const uint8_t* layout,
     const char button_names[][32],
     uint8_t button_count,
-    bool ble_connected) {
+    bool ble_connected,
+    uint8_t holding_key) {
     furi_assert(v);
     with_view_model(
         v->view,
@@ -131,6 +141,7 @@ void cc_manual_view_update(
                 }
             }
             m->ble_connected = ble_connected;
+            m->holding_key = holding_key;
         },
         true);
 }

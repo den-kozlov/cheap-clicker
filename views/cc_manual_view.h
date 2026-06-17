@@ -6,8 +6,10 @@
 typedef struct CcManualView CcManualView;
 
 typedef enum {
-    CcManualViewEventFire,     // short press; key passed as argument to callback
-    CcManualViewEventReassign, // long press;  key passed as argument to callback
+    CcManualViewEventFire,        // short press  → fire immediately
+    CcManualViewEventLongBegin,   // long threshold crossed, key still held
+    CcManualViewEventLongRelease, // released after a long press
+    CcManualViewEventConfigure,   // long press Back → open key config
 } CcManualViewEvent;
 
 typedef void (*CcManualViewCallback)(void* ctx, CcManualViewEvent event, InputKey key);
@@ -17,11 +19,13 @@ void cc_manual_view_free(CcManualView* v);
 View* cc_manual_view_get_view(CcManualView* v);
 void cc_manual_view_set_callback(CcManualView* v, CcManualViewCallback cb, void* ctx);
 
-// Update the displayed button names for all 5 key slots.
-// layout[i] is a button index (0-based into buttons[]) or CC_BUTTON_IDX_NONE.
+// Update displayed labels, BLE status, and holding-row highlight.
+// layout[i] is a button index or CC_BUTTON_IDX_NONE.
+// holding_key: 0-4 = that row draws inverted; CC_BUTTON_IDX_NONE = none.
 void cc_manual_view_update(
     CcManualView* v,
     const uint8_t* layout,
     const char button_names[][32],
     uint8_t button_count,
-    bool ble_connected);
+    bool ble_connected,
+    uint8_t holding_key);
